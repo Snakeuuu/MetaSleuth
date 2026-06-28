@@ -1,4 +1,6 @@
 import hashlib
+import shutil
+from datetime import datetime
 
 def calculate_hashes(filepath):
     """
@@ -79,3 +81,46 @@ def verify_hash(filepath, known_sha256):
     return current_sha256.lower() == known_sha256.lower()
     # .lower() because some systems write hashes in uppercase,
     # some in lowercase — we normalize both before comparing
+
+    def acquire_evidence(source_path, evidence_folder):
+        """
+        Proper forensic acquisition — never work on the original.
+
+        This function:
+        1. Hashes the original file immediately
+        2. Copies it to an evidence folder
+        3. Hashes the copy and verifies it matches
+        4. Returns the copy path for all subsequent analysis
+
+        The original file is never touched again after this.
+        This is what 'write blocking' means in software terms —
+        we document the original state and work on the copy.
+        """
+    import os
+
+    # Hash the original before touching it
+    original_hashes = calculate_hashes(source_path)
+
+    # Build a timestamped copy filename so evidence files
+    # never overwrite each other
+    timestamp   = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename    = os.path.basename(source_path)
+    copy_name   = f'{timestamp}_{filename}'
+    copy_path   = os.path.join(evidence_folder, copy_name)
+
+    # Copy the file
+    shutil.copy2(source_path, copy_path)
+
+    # Hash the copy and verify it matches the original
+    copy_hashes = calculate_hashes(copy_path)
+
+    acquisition_record = {
+        'original_path':    source_path,
+        'working_copy':     copy_path,
+        'original_sha256':  original_hashes['sha256'],
+        'copy_sha256':      copy_hashes['sha256'],
+        'integrity_verified': original_hashes['sha256'] == copy_hashes['sha256'],
+        'acquired_at':      datetime.now().isoformat()
+    }
+
+    return acquisition_record

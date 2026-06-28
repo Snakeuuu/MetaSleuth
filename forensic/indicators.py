@@ -1,6 +1,8 @@
 from datetime import datetime
+from forensic.magic_bytes import verify_file_type
 
-def analyze_indicators(metadata, file_type):
+def analyze_indicators(metadata, file_type, filepath=None, filename=None):
+
     """
     Takes all the metadata extracted from a file and
     runs it through a series of forensic checks.
@@ -21,6 +23,37 @@ def analyze_indicators(metadata, file_type):
     ]
     """
     indicators = []
+    # ----------------------------------------------------------------
+    # CHECK 0: Magic bytes file type verification
+    # ----------------------------------------------------------------
+    # Run this FIRST — before anything else.
+    # If the file is lying about what it is,
+    # everything else needs that context.
+    # ----------------------------------------------------------------
+    if filepath and filename and '.' in filename:
+        ext = filename.rsplit('.', 1)[1]
+        magic_result = verify_file_type(filepath, ext)
+
+        if magic_result['is_executable']:
+            indicators.append({
+                'severity': 'HIGH',
+                'description': f'DANGER — File is an EXECUTABLE disguised as .{ext}. '
+                            f'Magic bytes: {magic_result["signature"]}'
+            })
+
+        elif not magic_result['match']:
+            indicators.append({
+                'severity': 'HIGH',
+                'description': f'File type mismatch — declared .{ext} but '
+                            f'magic bytes indicate {magic_result["detected"]}. '
+                            f'Signature: {magic_result["signature"]}'
+            })
+        else:
+            indicators.append({
+                'severity': 'LOW',
+                'description': f'File type verified — extension matches '
+                            f'magic bytes ({magic_result["signature"]})'
+            })
 
     # ----------------------------------------------------------------
     # CHECK 1: No metadata at all
@@ -110,13 +143,13 @@ def analyze_indicators(metadata, file_type):
     # common anti-forensics technique.
     # ----------------------------------------------------------------
     created_str  = metadata.get('DateTime')           or \
-                   metadata.get('DateTimeOriginal')   or \
-                   metadata.get('Created')            or \
-                   metadata.get('Creation Date')
+                metadata.get('DateTimeOriginal')   or \
+                metadata.get('Created')            or \
+                metadata.get('Creation Date')
 
     modified_str = metadata.get('DateTimeDigitized') or \
-                   metadata.get('Modified')           or \
-                   metadata.get('Modified Date')
+                metadata.get('Modified')           or \
+                metadata.get('Modified Date')
 
     if created_str and modified_str:
         created_dt  = parse_date(str(created_str))

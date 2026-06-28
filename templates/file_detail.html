@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MetaSleuth — File Detail</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+        :root {
+            --void:          #070710;
+            --panel:         #0e0e1f;
+            --surface:       #13132a;
+            --border:        rgba(0, 212, 255, 0.15);
+            --border-bright: rgba(0, 212, 255, 0.5);
+            --cyan:          #00d4ff;
+            --violet:        #7b2fff;
+            --alert:         #ff3366;
+            --warn:          #ffaa00;
+            --ok:            #00ff9d;
+            --text:          #e2e8f0;
+            --muted:         #6b7a99;
+            --mono:          'JetBrains Mono', monospace;
+            --sans:          'Space Grotesk', sans-serif;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--void);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+        }
+
+        /* Grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glow orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .orb-a { width: 500px; height: 500px; background: rgba(123,47,255,0.15); top: -100px; right: -100px; }
+        .orb-b { width: 400px; height: 400px; background: rgba(0,212,255,0.10); bottom: 100px; left: -80px; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(7, 7, 16, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 12px;
+            font-family: var(--mono);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--border-bright);
+            color: var(--cyan);
+        }
+
+        .breadcrumb {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .breadcrumb span {
+            color: var(--text);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 20px;
+            background: linear-gradient(135deg, var(--cyan), var(--violet));
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--sans);
+            text-decoration: none;
+            box-shadow: 0 0 24px rgba(0, 212, 255, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 36px rgba(0, 212, 255, 0.5);
+        }
+
+        /* ── PAGE CONTENT ── */
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 32px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── PANEL ── */
+        .panel {
+            background: rgba(14, 14, 31, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 8px var(--cyan);
+        }
+
+        .dot.v { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+        .dot.a { background: var(--alert);  box-shadow: 0 0 8px var(--alert); }
+        .dot.o { background: var(--ok);     box-shadow: 0 0 8px var(--ok); }
+
+        .panel-body {
+            padding: 20px 24px;
+        }
+
+        /* ── TWO COLUMN ── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ── METADATA TABLE ── */
+        .meta-table {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .meta-row {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 16px;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            align-items: baseline;
+            font-size: 12px;
+        }
+
+        .meta-row:last-child {
+            border-bottom: none;
+        }
+
+        .meta-key {
+            font-family: var(--mono);
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .meta-val {
+            font-family: var(--mono);
+            color: var(--text);
+            word-break: break-all;
+            font-size: 11px;
+        }
+
+        .meta-val.warn {
+            color: var(--warn);
+        }
+
+        .meta-val.alert {
+            color: var(--alert);
+        }
+
+        .meta-val.ok {
+            color: var(--ok);
+        }
+
+        /* ── HASH BLOCK ── */
+        .hash-block {
+            background: var(--void);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .hash-row {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 12px;
+            font-size: 11px;
+            font-family: var(--mono);
+        }
+
+        .hash-algo {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .hash-val {
+            color: var(--text);
+            word-break: break-all;
+        }
+
+        /* ── INDICATOR ITEMS ── */
+        .ind-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ind-item {
+            padding: 12px 14px;
+            border-radius: 10px;
+            border-left: 3px solid;
+        }
+
+        .ind-item.HIGH   { border-color: var(--alert);  background: rgba(255, 51,  102, 0.06); }
+        .ind-item.MEDIUM { border-color: var(--warn);   background: rgba(255, 170,   0, 0.06); }
+        .ind-item.LOW    { border-color: var(--ok);     background: rgba(0,   255, 157, 0.04); }
+
+        .ind-sev {
+            font-size: 10px;
+            font-family: var(--mono);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .ind-sev.HIGH   { color: var(--alert); }
+        .ind-sev.MEDIUM { color: var(--warn); }
+        .ind-sev.LOW    { color: var(--ok); }
+
+        .ind-desc {
+            font-size: 12px;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        /* ── EMPTY STATE ── */
+        .empty {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        .empty-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+            opacity: 0.4;
+        }
+
+        /* ── FILE INFO HEADER ── */
+        .file-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(123,47,255,0.08), rgba(0,212,255,0.04));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+
+        .file-header-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .file-header-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .file-header-meta {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted);
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .file-header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Severity badge in header */
+        .sev-badge {
+            margin-left: auto;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-family: var(--mono);
+            font-weight: 700;
+            border: 1px solid;
+            flex-shrink: 0;
+        }
+
+        .sev-badge.HIGH   { color: var(--alert); border-color: rgba(255,51,102,0.4);  background: rgba(255,51,102,0.1); }
+        .sev-badge.MEDIUM { color: var(--warn);  border-color: rgba(255,170,0,0.4);   background: rgba(255,170,0,0.1); }
+        .sev-badge.LOW    { color: var(--ok);    border-color: rgba(0,255,157,0.3);   background: rgba(0,255,157,0.07); }
+        .sev-badge.NONE   { color: var(--muted); border-color: var(--border);          background: transparent; }
+    </style>
+</head>
+<body>
+
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+
+    <!-- ── TOPBAR ── -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <a class="back-btn" href="/">← Dashboard</a>
+            <div class="breadcrumb">
+                Evidence &nbsp;/&nbsp; <span>File #{{ file_id }}</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <a class="btn-primary" href="/report/{{ file_id }}">
+                📄 Export PDF Report
+            </a>
+        </div>
+    </div>
+
+    <!-- ── PAGE ── -->
+    <div class="page">
+
+        <!-- File header -->
+        <div class="file-header">
+            <div class="file-header-icon">🔍</div>
+            <div>
+                <div class="file-header-name">File #{{ file_id }}</div>
+                <div class="file-header-meta">
+                    <span>📊 {{ metadata | length }} metadata fields</span>
+                    <span>⚠ {{ indicators | length }} indicators</span>
+                </div>
+            </div>
+
+            <!-- Highest severity badge -->
+            {% set severities = indicators | map(attribute='severity') | list %}
+            {% if 'HIGH' in severities %}
+                <span class="sev-badge HIGH">⚠ HIGH SEVERITY</span>
+            {% elif 'MEDIUM' in severities %}
+                <span class="sev-badge MEDIUM">⚡ MEDIUM SEVERITY</span>
+            {% elif 'LOW' in severities %}
+                <span class="sev-badge LOW">✓ LOW SEVERITY</span>
+            {% else %}
+                <span class="sev-badge NONE">— NO INDICATORS</span>
+            {% endif %}
+        </div>
+
+        <!-- Two column: metadata + indicators -->
+        <div class="two-col">
+
+            <!-- Extracted metadata -->
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">
+                        <span class="dot v"></span>
+                        Extracted Metadata
+                    </div>
+                </div>
+                <div class="panel-body">
+                    {% if metadata %}
+                        <div class="meta-table">
+                            {% for row in metadata %}
+                            <div class="meta-row">
+                                <span class="meta-key">{{ row['key'] }}</span>
+                                <span class="meta-val
+                                    {% if 'GPS' in row['key'] %}ok
+                                    {% elif 'Error' in row['key'] %}alert
+                                    {% elif 'Software' in row['key'] %}warn
+                                    {% endif %}
+                                ">
+                                    {{ row['value'] }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty">
+                            <div class="empty-icon">📭</div>
+                            No metadata extracted from this file.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right column: indicators + hashes -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+
+                <!-- Forensic indicators -->
+                <div class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <span class="dot a"></span>
+                            Forensic Indicators
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        {% if indicators %}
+                            <div class="ind-list">
+                                {% for ind in indicators %}
+                                <div class="ind-item {{ ind['severity'] }}">
+                                    <div class="ind-sev {{ ind['severity'] }}">
+                                        {% if ind['severity'] == 'HIGH' %}⚠ HIGH
+                                        {% elif ind['severity'] == 'MEDIUM' %}⚡ MEDIUM
+                                        {% else %}✓ LOW
+                                        {% endif %}
+                                    </div>
+                                    <div class="ind-desc">{{ ind['description'] }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty">
+                                <div class="empty-icon">✓</div>
+                                No indicators found.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- File hashes -->
+                <div class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <span class="dot o"></span>
+                            Integrity Hashes
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="hash-block">
+                            {% for row in metadata %}
+                                {% if row['key'] == 'MD5' or row['key'] == 'SHA1' or row['key'] == 'SHA256' %}
+                                <div class="hash-row">
+                                    <span class="hash-algo">{{ row['key'] }}</span>
+                                    <span class="hash-val">{{ row['value'] }}</span>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div style="
+                            margin-top: 12px;
+                            font-size: 10px;
+                            font-family: var(--mono);
+                            color: var(--muted);
+                            line-height: 1.7;
+                        ">
+                            Hashes calculated on upload before any analysis.<br>
+                            Use SHA256 to verify evidence integrity.
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /right column -->
+
+        </div><!-- /two-col -->
+
+    </div><!-- /page -->
+
+</body>
+</html>

@@ -3,6 +3,9 @@ import sys
 from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from forensic.report import generate_report
+from forensic.antiforensics import detect_antiforensics
+
 
 # Import our own files
 from config import (UPLOAD_FOLDER, REPORT_FOLDER, DATABASE,
@@ -135,6 +138,15 @@ def run_analysis(filepath, filename):
 
     # STEP 3 — Run forensic checks on the extracted metadata
     indicators = analyze_indicators(metadata, file_type)
+    antiforensics_findings = detect_antiforensics(metadata, filepath, file_type)
+
+# Convert antiforensics findings to indicator format
+# so they appear in the same indicators list
+    for finding in antiforensics_findings:
+        indicators.append({
+            'severity':    finding['confidence'],
+            'description': f"[ANTI-FORENSICS] {finding['description']}"
+        })
 
     high_count = sum(1 for i in indicators if i['severity'] == 'HIGH')
     if high_count > 0:
@@ -295,6 +307,63 @@ def api_stats():
     """
     return jsonify(get_dashboard_stats())
 
+
+@app.route('/report/<int:file_id>')
+def export_report(file_id):
+    """
+    Generates a PDF report for one specific file
+    and sends it to the browser as a download.
+    """
+    # Get everything we need from the database
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM files WHERE id = ?', (file_id,))
+    file_row = cursor.fetchone()
+    conn.close()
+
+    if not file_row:
+        return jsonify({'error': 'File not found'}), 404
+
+    file_record   = dict(file_row)
+    metadata_rows = get_file_metadata(file_id)
+    indicator_rows= get_file_indicators(file_id)
+    audit_rows    = get_audit_log()
+
+    # Convert SQLite Row objects to plain dictionaries
+    metadata   = {row['key']:   row['value']       for row in metadata_rows}
+    indicators = [{'severity':  row['severity'],
+                   'description': row['description']} for row in indicator_rows]
+    audit      = [dict(row) for row in audit_rows]
+
+    # Build a timeline from the metadata we have
+    from forensic.timeline import build_timeline
+    timeline = build_timeline(metadata, file_record['filename'])
+
+    # Generate the report file
+    report_filename = f'MetaSleuth_Report_{file_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    report_path     = os.path.join(REPORT_FOLDER, report_filename)
+
+    generate_report(
+        output_path   = report_path,
+        file_record   = file_record,
+        metadata      = metadata,
+        indicators    = indicators,
+        timeline      = timeline,
+        audit_entries = audit,
+        case_id       = 'CASE-001'
+    )
+
+    log_action('REPORT',
+               f'PDF report exported for file ID {file_id}: {report_filename}',
+               ANALYST_NAME, TOOL_VERSION)
+
+    # Send the file to the browser as a download
+    return send_file(
+        report_path,
+        as_attachment = True,
+        download_name = report_filename,
+        mimetype      = 'application/pdf'
+    )
 
 @app.route('/api/correlations')
 def api_correlations():
