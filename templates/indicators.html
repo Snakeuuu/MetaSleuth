@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Indicators{% endblock %}
+{% block breadcrumb %}Investigate / <span>Indicators</span>{% endblock %}
+
+{% block extra_styles %}
+.ind-item {
+    padding:14px 16px; border-radius:10px;
+    border-left:3px solid; margin-bottom:8px;
+}
+.ind-item.HIGH   { border-color:var(--alert);  background:rgba(255,51,102,0.05); }
+.ind-item.MEDIUM { border-color:var(--warn);   background:rgba(255,170,0,0.05); }
+.ind-item.LOW    { border-color:var(--ok);     background:rgba(0,255,157,0.04); }
+.ind-sev  { font-size:10px; font-family:var(--mono); font-weight:700; letter-spacing:.1em; margin-bottom:4px; }
+.ind-sev.HIGH   { color:var(--alert); }
+.ind-sev.MEDIUM { color:var(--warn); }
+.ind-sev.LOW    { color:var(--ok); }
+.ind-desc { font-size:13px; margin-bottom:4px; }
+.ind-file { font-size:11px; font-family:var(--mono); color:var(--cyan); }
+.stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.stat-card {
+    background:rgba(14,14,31,0.8); border:1px solid var(--border);
+    border-radius:12px; padding:18px; text-align:center;
+}
+.stat-num  { font-size:32px; font-weight:700; }
+.stat-lbl  { font-size:10px; font-family:var(--mono); color:var(--muted); margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
+{% endblock %}
+
+{% block content %}
+
+<div>
+    <div class="page-title">⚠ Forensic Indicators</div>
+    <div class="page-sub">All suspicious findings across every analyzed file</div>
+</div>
+
+<!-- Summary cards -->
+<div class="stat-row">
+    <div class="stat-card">
+        <div class="stat-num" style="color:var(--alert);text-shadow:0 0 20px rgba(255,51,102,0.5)">
+            {{ high | length }}
+        </div>
+        <div class="stat-lbl">High Severity</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num" style="color:var(--warn);text-shadow:0 0 20px rgba(255,170,0,0.5)">
+            {{ medium | length }}
+        </div>
+        <div class="stat-lbl">Medium Severity</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num" style="color:var(--ok);text-shadow:0 0 20px rgba(0,255,157,0.5)">
+            {{ low | length }}
+        </div>
+        <div class="stat-lbl">Low Severity</div>
+    </div>
+</div>
+
+<!-- HIGH -->
+{% if high %}
+<div class="panel">
+    <div class="panel-head">
+        <div class="panel-title"><span class="dot a"></span>High Severity</div>
+    </div>
+    <div class="panel-body">
+        {% for ind in high %}
+        <div class="ind-item HIGH">
+            <div class="ind-sev HIGH">⚠ HIGH</div>
+            <div class="ind-desc">{{ ind.description }}</div>
+            <a class="ind-file" href="/file/{{ ind.file_id }}">{{ ind.filename }}</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- MEDIUM -->
+{% if medium %}
+<div class="panel">
+    <div class="panel-head">
+        <div class="panel-title"><span class="dot" style="background:var(--warn);box-shadow:0 0 8px var(--warn)"></span>Medium Severity</div>
+    </div>
+    <div class="panel-body">
+        {% for ind in medium %}
+        <div class="ind-item MEDIUM">
+            <div class="ind-sev MEDIUM">⚡ MEDIUM</div>
+            <div class="ind-desc">{{ ind.description }}</div>
+            <a class="ind-file" href="/file/{{ ind.file_id }}">{{ ind.filename }}</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- LOW -->
+{% if low %}
+<div class="panel">
+    <div class="panel-head">
+        <div class="panel-title"><span class="dot o"></span>Low Severity</div>
+    </div>
+    <div class="panel-body">
+        {% for ind in low %}
+        <div class="ind-item LOW">
+            <div class="ind-sev LOW">✓ LOW</div>
+            <div class="ind-desc">{{ ind.description }}</div>
+            <a class="ind-file" href="/file/{{ ind.file_id }}">{{ ind.filename }}</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if not indicators %}
+<div class="empty">
+    <div class="empty-icon">✓</div>
+    No indicators yet. Upload files to begin analysis.
+</div>
+{% endif %}
+
+{% endblock %}

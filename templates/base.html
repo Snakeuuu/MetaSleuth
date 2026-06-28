@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MetaSleuth — {% block title %}DFIR Toolkit{% endblock %}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+        :root {
+            --void:          #070710;
+            --panel:         #0e0e1f;
+            --surface:       #13132a;
+            --border:        rgba(0,212,255,0.15);
+            --border-bright: rgba(0,212,255,0.5);
+            --cyan:          #00d4ff;
+            --violet:        #7b2fff;
+            --alert:         #ff3366;
+            --warn:          #ffaa00;
+            --ok:            #00ff9d;
+            --text:          #e2e8f0;
+            --muted:         #6b7a99;
+            --mono:          'JetBrains Mono', monospace;
+            --sans:          'Space Grotesk', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--void);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none; z-index: 0;
+        }
+
+        .orb {
+            position: fixed; border-radius: 50%;
+            filter: blur(120px); pointer-events: none; z-index: 0;
+        }
+        .orb-a { width:500px; height:500px; background:rgba(123,47,255,0.15); top:-100px; right:-100px; }
+        .orb-b { width:400px; height:400px; background:rgba(0,212,255,0.10);  bottom:100px; left:-80px; }
+
+        .app { position:relative; z-index:1; display:flex; min-height:100vh; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 260px; flex-shrink: 0;
+            background: rgba(14,14,31,0.85);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            padding: 24px 0;
+            position: fixed; left:0; top:0; bottom:0; z-index:100;
+        }
+
+        .logo {
+            padding: 0 24px 28px;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width:36px; height:36px;
+            background: linear-gradient(135deg, var(--cyan), var(--violet));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 20px rgba(0,212,255,0.4);
+        }
+
+        .logo-name { font-size:17px; font-weight:700; }
+        .logo-sub  { font-size:9px; font-family:var(--mono); color:var(--cyan); letter-spacing:.15em; }
+
+        .nav { flex:1; padding:0 12px; display:flex; flex-direction:column; gap:3px; }
+
+        .nav-label {
+            font-size:9px; font-family:var(--mono);
+            letter-spacing:.2em; text-transform:uppercase;
+            color:var(--muted); padding:14px 12px 5px;
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13px; font-weight: 500; color: var(--muted);
+            cursor: pointer; border: 1px solid transparent;
+            transition: all .2s; text-decoration: none;
+        }
+
+        .nav-item:hover  { color:var(--text); background:rgba(255,255,255,0.04); border-color:var(--border); }
+        .nav-item.active { color:var(--cyan); background:rgba(0,212,255,0.08);   border-color:rgba(0,212,255,0.25); }
+
+        .sidebar-foot {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            font-size: 11px; font-family: var(--mono); color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .live-dot {
+            display:inline-block; width:6px; height:6px;
+            background:var(--ok); border-radius:50%;
+            margin-right:5px; box-shadow:0 0 6px var(--ok);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        /* ── MAIN ── */
+        .main { margin-left:240px; flex:1; display:flex; flex-direction:column;padding: 40px; }
+
+        .topbar {
+            position: sticky; top:0; z-index:50;
+            background: rgba(7,7,16,0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 13px 32px;
+            display: flex; align-items:center; justify-content:space-between; gap:16px;
+        }
+
+        .breadcrumb { font-size:14px; font-weight:600; color:var(--muted); }
+        .breadcrumb span { color:var(--text); }
+
+        .search-wrap {
+            display:flex; align-items:center; gap:8px;
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:8px; padding:7px 14px; width:280px;
+            transition:border-color .2s;
+        }
+        .search-wrap:focus-within { border-color:var(--border-bright); }
+        .search-wrap input {
+            background:none; border:none; outline:none;
+            font-size:13px; color:var(--text);
+            font-family:var(--mono); width:100%;
+        }
+        .search-wrap input::placeholder { color:var(--muted); }
+
+        .topbar-right { display:flex; align-items:center; gap:10px; }
+
+        .icon-btn {
+            width:34px; height:34px; border-radius:8px;
+            border:1px solid var(--border); background:var(--surface);
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; font-size:13px; color:var(--muted);
+            transition:all .2s;
+        }
+        .icon-btn:hover { border-color:var(--border-bright); color:var(--cyan); }
+
+        .avatar {
+            width:32px; height:32px; border-radius:8px;
+            background:linear-gradient(135deg,var(--violet),var(--cyan));
+            display:flex; align-items:center; justify-content:center;
+            font-size:11px; font-weight:700; cursor:pointer;
+        }
+
+        .content { padding:28px 32px; display:flex; flex-direction:column; gap:24px; }
+
+        /* ── SHARED COMPONENTS ── */
+        .panel {
+            background: rgba(14,14,31,0.85);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items:center; justify-content:space-between;
+        }
+
+        .panel-title { font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }
+
+        .dot { width:6px; height:6px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
+        .dot.v { background:var(--violet); box-shadow:0 0 8px var(--violet); }
+        .dot.a { background:var(--alert);  box-shadow:0 0 8px var(--alert); }
+        .dot.o { background:var(--ok);     box-shadow:0 0 8px var(--ok); }
+
+        .panel-body { padding:18px 22px; }
+
+        .btn-outline {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:7px 16px; border:1px solid var(--border-bright);
+            border-radius:8px; background:transparent;
+            color:var(--cyan); font-size:12px; font-family:var(--mono);
+            cursor:pointer; transition:all .2s; text-decoration:none;
+        }
+        .btn-outline:hover { background:rgba(0,212,255,0.08); }
+
+        .btn-primary {
+            display:inline-flex; align-items:center; gap:8px;
+            padding:9px 20px;
+            background:linear-gradient(135deg,var(--cyan),var(--violet));
+            border:none; border-radius:10px;
+            color:#fff; font-size:13px; font-weight:600;
+            cursor:pointer; font-family:var(--sans);
+            text-decoration:none;
+            box-shadow:0 0 24px rgba(0,212,255,0.3);
+            transition:all .2s;
+        }
+        .btn-primary:hover { transform:translateY(-1px); }
+
+        .page-title {
+            font-size:22px; font-weight:700;
+            display:flex; align-items:center; gap:12px;
+            margin-bottom:4px;
+        }
+
+        .page-sub {
+            font-size:12px; font-family:var(--mono); color:var(--muted);
+        }
+
+        .empty {
+            text-align:center; padding:40px 20px;
+            color:var(--muted); font-family:var(--mono); font-size:13px;
+        }
+        .empty-icon { font-size:32px; margin-bottom:10px; opacity:.4; }
+
+        .sev-chip {
+            padding:3px 8px; border-radius:100px;
+            font-size:10px; font-family:var(--mono); font-weight:600;
+            border:1px solid; white-space:nowrap;
+        }
+        .sev-HIGH   { color:var(--alert);  border-color:rgba(255,51,102,0.3);  background:rgba(255,51,102,0.1); }
+        .sev-MEDIUM { color:var(--warn);   border-color:rgba(255,170,0,0.3);   background:rgba(255,170,0,0.1); }
+        .sev-LOW    { color:var(--ok);     border-color:rgba(0,255,157,0.25);  background:rgba(0,255,157,0.07); }
+        .sev-NONE   { color:var(--muted);  border-color:var(--border);         background:transparent; }
+
+        .file-icon {
+            width:36px; height:36px; border-radius:8px;
+            display:flex; align-items:center; justify-content:center; font-size:15px;
+        }
+        .fi-image { background:rgba(0,212,255,0.1); }
+        .fi-pdf   { background:rgba(255,51,102,0.1); }
+        .fi-word  { background:rgba(123,47,255,0.1); }
+        .fi-audio { background:rgba(0,255,157,0.1); }
+        .fi-video { background:rgba(255,170,0,0.1); }
+        .fi-zip   { background:rgba(255,255,255,0.06); }
+
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:var(--void); }
+        ::-webkit-scrollbar-thumb { background:rgba(0,212,255,0.2); border-radius:100px; }
+
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+
+    <div class="app">
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🔍</div>
+                <div>
+                    <div class="logo-name">MetaSleuth</div>
+                    <div class="logo-sub">DFIR TOOLKIT</div>
+                </div>
+            </div>
+
+            <nav class="nav">
+                <div class="nav-label">Investigate</div>
+                <a class="nav-item {% if request.path == '/' %}active{% endif %}"           href="/">⬡ &nbsp; Dashboard</a>
+                <a class="nav-item {% if request.path == '/evidence' %}active{% endif %}"   href="/evidence">📂 &nbsp; Evidence Files</a>
+                <a class="nav-item {% if request.path == '/timeline' %}active{% endif %}"   href="/timeline">🕐 &nbsp; Timeline</a>
+                <a class="nav-item {% if request.path == '/indicators' %}active{% endif %}" href="/indicators">⚠ &nbsp; Indicators</a>
+
+                <div class="nav-label">Analyze</div>
+                <a class="nav-item {% if request.path == '/search' %}active{% endif %}"       href="/search">🔎 &nbsp; Search Metadata</a>
+                <a class="nav-item {% if request.path == '/correlations' %}active{% endif %}" href="/correlations">🔗 &nbsp; Correlations</a>
+
+                <div class="nav-label">Case</div>
+                <a class="nav-item {% if request.path == '/cases' %}active{% endif %}"    href="/cases">📋 &nbsp; Case Manager</a>
+                <a class="nav-item {% if request.path == '/auditlog' %}active{% endif %}" href="/auditlog">📜 &nbsp; Audit Log</a>
+            </nav>
+
+            <div class="sidebar-foot">
+                <span class="live-dot"></span>Online<br>
+                v{{ version if version else '1.0.0' }}<br>
+                {{ analyst if analyst else 'analyst@metasleuth' }}
+            </div>
+        </aside>
+
+        <!-- ── MAIN ── -->
+        <div class="main">
+
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="breadcrumb">
+                    {% block breadcrumb %}Dashboard{% endblock %}
+                </div>
+                <form class="search-wrap" action="/search" method="GET">
+                    <span>🔍</span>
+                    <input name="q" type="text" placeholder="Search author, GPS, hash…" />
+                </form>
+                <div class="topbar-right">
+                    <div class="icon-btn">🔔</div>
+                    <div class="icon-btn">⚙</div>
+                    <div class="avatar">AN</div>
+                </div>
+            </div>
+
+            <!-- Page content -->
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

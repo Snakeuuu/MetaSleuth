@@ -12,11 +12,12 @@ from config import (UPLOAD_FOLDER, REPORT_FOLDER, DATABASE,
                     MAX_FILE_SIZE, ALLOWED_EXTENSIONS,
                     ANALYST_NAME, TOOL_VERSION)
 
-from database.db       import (create_tables, log_action, save_file_record,
-                                save_metadata, save_indicators, get_all_files,
-                                get_file_metadata, get_file_indicators,
-                                get_audit_log, get_dashboard_stats,
-                                search_metadata, get_correlations)
+from database.db import (create_tables, log_action, save_file_record,
+                          save_metadata, save_indicators, get_all_files,
+                          get_file_metadata, get_file_indicators,
+                          get_audit_log, get_dashboard_stats,
+                          search_metadata, get_correlations,
+                          get_connection)
 
 from analyzers.image   import analyze_image
 from analyzers.pdf     import analyze_pdf
@@ -280,6 +281,114 @@ def file_detail(file_id):
                         file_id    = file_id,
                         metadata   = metadata,
                         indicators = indicators)
+
+
+@app.route('/evidence')
+def evidence_files():
+    files = get_all_files()
+    return render_template('evidence.html', files=files)
+
+
+@app.route('/timeline')
+def timeline_page():
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT m.key, m.value, f.filename, f.id, f.file_type
+        FROM metadata m
+        JOIN files f ON m.file_id = f.id
+        WHERE m.key IN (
+            "DateTime", "DateTimeOriginal", "DateTimeDigitized",
+            "Created", "Modified", "Creation Date", "Modified Date",
+            "Last Printed", "Encoded Date", "Tagged Date"
+        )
+        ORDER BY m.value ASC
+    ''')
+    raw_events = cursor.fetchall()
+    conn.close()
+
+    events = []
+    for row in raw_events:
+        events.append({
+            'key':       row['key'],
+            'value':     row['value'],
+            'filename':  row['filename'],
+            'file_id':   row['id'],
+            'file_type': row['file_type'],
+        })
+
+    return render_template('timeline.html', events=events)
+
+
+@app.route('/indicators')
+def indicators_page():
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT i.severity, i.description,
+               f.filename, f.id as file_id, f.file_type
+        FROM indicators i
+        JOIN files f ON i.file_id = f.id
+        ORDER BY
+            CASE i.severity
+                WHEN "HIGH"   THEN 1
+                WHEN "MEDIUM" THEN 2
+                ELSE 3
+            END,
+            f.upload_time DESC
+    ''')
+    rows = cursor.fetchall()
+    conn.close()
+
+    indicators = [dict(r) for r in rows]
+    high   = [i for i in indicators if i['severity'] == 'HIGH']
+    medium = [i for i in indicators if i['severity'] == 'MEDIUM']
+    low    = [i for i in indicators if i['severity'] == 'LOW']
+
+    return render_template('indicators.html',
+                           indicators=indicators,
+                           high=high,
+                           medium=medium,
+                           low=low)
+
+
+@app.route('/search')
+def search_page():
+    query   = request.args.get('q', '').strip()
+    results = search_metadata(query) if query else []
+    return render_template('search.html',
+                           results=results,
+                           query=query)
+
+
+@app.route('/correlations')
+def correlations_page():
+    corr = get_correlations()
+    return render_template('correlations.html',
+                           shared_authors=corr['shared_authors'],
+                           shared_gps=corr['shared_gps'])
+
+
+@app.route('/cases')
+def cases_page():
+    files = get_all_files()
+    stats = get_dashboard_stats()
+    return render_template('cases.html',
+                           files=files,
+                           stats=stats)
+
+
+@app.route('/auditlog')
+def auditlog_page():
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM audit_log ORDER BY timestamp DESC')
+    rows = cursor.fetchall()
+    conn.close()
+    entries = [dict(r) for r in rows]
+    return render_template('auditlog.html', entries=entries)
+
+
 
 
 @app.route('/search')

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log{% endblock %}
+{% block breadcrumb %}Case / <span>Audit Log</span>{% endblock %}
+
+{% block extra_styles %}
+.audit-table { display:flex; flex-direction:column; }
+.audit-row {
+    display:grid;
+    grid-template-columns:180px 80px 1fr 160px;
+    gap:12px; padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+    font-size:11px; font-family:var(--mono); align-items:center;
+}
+.audit-row:last-child { border-bottom:none; }
+.audit-row.header { color:var(--muted); font-size:9px; letter-spacing:.1em; text-transform:uppercase; padding-bottom:12px; }
+.a-time   { color:var(--muted); }
+.a-action { color:var(--cyan); font-weight:600; }
+.a-detail { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.a-analyst{ color:var(--muted); }
+{% endblock %}
+
+{% block content %}
+
+<div>
+    <div class="page-title">📜 Chain of Custody</div>
+    <div class="page-sub">Tamper-evident log of every action taken on evidence</div>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <div class="panel-title"><span class="dot o"></span>Audit Log</div>
+        <span style="font-size:11px;font-family:var(--mono);color:var(--muted)">
+            {{ entries | length }} entries
+        </span>
+    </div>
+    <div class="panel-body">
+        {% if entries %}
+            <div class="audit-table">
+                <div class="audit-row header">
+                    <span>Timestamp</span>
+                    <span>Action</span>
+                    <span>Detail</span>
+                    <span>Analyst</span>
+                </div>
+                {% for e in entries %}
+                <div class="audit-row">
+                    <span class="a-time">{{ e.timestamp[:19] if e.timestamp else '' }}</span>
+                    <span class="a-action">{{ e.action }}</span>
+                    <span class="a-detail">{{ e.detail }}</span>
+                    <span class="a-analyst">{{ e.analyst }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty">
+                <div class="empty-icon">📜</div>
+                No audit entries yet.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

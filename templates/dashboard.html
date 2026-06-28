@@ -1,3 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block breadcrumb %}Case #001 / <span>Dashboard</span>{% endblock %}
+{% block content %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1036,35 +1041,43 @@
             <nav class="nav">
 
                 <div class="nav-label">Investigate</div>
-                <a class="nav-item active" href="/">
+                <a class="nav-item {% if request.path == '/' %}active{% endif %}"
+                   href="/">
                     ⬡ &nbsp; Dashboard
                 </a>
-                <a class="nav-item" href="#">
+                <a class="nav-item {% if request.path == '/evidence' %}active{% endif %}"
+                   href="/evidence">
                     📂 &nbsp; Evidence Files
                 </a>
-                <a class="nav-item" href="#">
+                <a class="nav-item {% if request.path == '/timeline' %}active{% endif %}"
+                   href="/timeline">
                     🕐 &nbsp; Timeline
                 </a>
-                <a class="nav-item" href="#">
+                <a class="nav-item {% if request.path == '/indicators' %}active{% endif %}"
+                   href="/indicators">
                     ⚠ &nbsp; Indicators
                 </a>
-
+            
                 <div class="nav-label">Analyze</div>
-                <a class="nav-item" href="/search">
+                <a class="nav-item {% if request.path == '/search' %}active{% endif %}"
+                   href="/search">
                     🔎 &nbsp; Search Metadata
                 </a>
-                <a class="nav-item" href="#">
+                <a class="nav-item {% if request.path == '/correlations' %}active{% endif %}"
+                   href="/correlations">
                     🔗 &nbsp; Correlations
                 </a>
-
+            
                 <div class="nav-label">Case</div>
-                <a class="nav-item" href="#">
+                <a class="nav-item {% if request.path == '/cases' %}active{% endif %}"
+                   href="/cases">
                     📋 &nbsp; Case Manager
                 </a>
-                <a class="nav-item" href="#">
+                <a class="nav-item {% if request.path == '/auditlog' %}active{% endif %}"
+                   href="/auditlog">
                     📜 &nbsp; Audit Log
                 </a>
-
+            
             </nav>
 
             <div class="sidebar-foot">
@@ -1635,3 +1648,4 @@
 
 </body>
 </html>
+{% endblock %}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>MetaSleuth — Evidence Files</title>
+    {% include 'partials/head_styles.html' ignore missing %}
+    <style>
+        {% include 'partials/shared_styles.css' ignore missing %}
+    </style>
+</head>
+<body>
+    {% extends 'base.html' %}
+{% block title %}Evidence Files{% endblock %}
+{% block breadcrumb %}Evidence / <span>All Files</span>{% endblock %}
+
+{% block extra_styles %}
+.file-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 80px 70px 90px 100px;
+    align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    text-decoration: none; color: inherit;
+    transition: all .2s; margin-bottom: 8px;
+}
+.file-row:hover { border-color: var(--border-bright); }
+.file-name  { font-size:13px; font-weight:500; }
+.file-hash  { font-size:10px; font-family:var(--mono); color:var(--muted); margin-top:2px; }
+.file-meta  { font-size:11px; font-family:var(--mono); color:var(--muted); }
+{% endblock %}
+
+{% block content %}
+
+<div>
+    <div class="page-title">📂 Evidence Files</div>
+    <div class="page-sub">{{ files | length }} file{{ 's' if files | length != 1 }} in database</div>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <div class="panel-title"><span class="dot"></span>All Evidence</div>
+    </div>
+    <div class="panel-body">
+        {% if files %}
+            {% for f in files %}
+            <a class="file-row" href="/file/{{ f.id }}">
+
+                <div class="file-icon
+                    {% if   f.file_type == 'image' %}fi-image
+                    {% elif f.file_type == 'pdf'   %}fi-pdf
+                    {% elif f.file_type == 'word'  %}fi-word
+                    {% elif f.file_type == 'audio' %}fi-audio
+                    {% elif f.file_type == 'video' %}fi-video
+                    {% else %}fi-zip{% endif %}">
+                    {% if   f.file_type == 'image' %}🖼
+                    {% elif f.file_type == 'pdf'   %}📄
+                    {% elif f.file_type == 'word'  %}📝
+                    {% elif f.file_type == 'audio' %}🎵
+                    {% elif f.file_type == 'video' %}🎬
+                    {% else %}📦{% endif %}
+                </div>
+
+                <div>
+                    <div class="file-name">{{ f.filename }}</div>
+                    <div class="file-hash">sha256: {{ f.sha256[:20] if f.sha256 else 'N/A' }}…</div>
+                </div>
+
+                <div class="file-meta">
+                    {% if f.file_size %}
+                        {% if f.file_size > 1048576 %}{{ "%.1f"|format(f.file_size/1048576) }} MB
+                        {% else %}{{ "%.0f"|format(f.file_size/1024) }} KB{% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="file-meta">{{ f.file_type }}</div>
+
+                <div class="file-meta">{{ f.upload_time[:10] if f.upload_time else '' }}</div>
+
+                <span class="sev-chip sev-{{ f.highest_severity or 'NONE' }}">
+                    {% if   f.highest_severity == 'HIGH'   %}⚠ HIGH
+                    {% elif f.highest_severity == 'MEDIUM' %}⚡ MED
+                    {% elif f.highest_severity == 'LOW'    %}✓ LOW
+                    {% else %}— NONE{% endif %}
+                </span>
+
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <div class="empty-icon">📂</div>
+                No evidence files yet. Upload files from the dashboard.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

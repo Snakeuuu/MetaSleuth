@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Case Manager{% endblock %}
+{% block breadcrumb %}Case / <span>Case Manager</span>{% endblock %}
+
+{% block content %}
+
+<div>
+    <div class="page-title">📋 Case Manager</div>
+    <div class="page-sub">Case #001 — Active Investigation</div>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <div class="panel-title"><span class="dot"></span>Case #001 Summary</div>
+        <a class="btn-outline" href="/report/1">📄 Export Report</a>
+    </div>
+    <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:700;color:var(--cyan)">{{ stats.total }}</div>
+                <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em;">Files</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:700;color:var(--violet)">{{ stats.images }}</div>
+                <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em;">Images</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:700;color:var(--warn)">{{ stats.total_indicators }}</div>
+                <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em;">Indicators</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:700;color:var(--alert)">{{ stats.high }}</div>
+                <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em;">High Severity</div>
+            </div>
+        </div>
+
+        <div style="font-size:11px;font-family:var(--mono);color:var(--muted);line-height:2;">
+            Case ID: CASE-001<br>
+            Status: Active<br>
+            Analyst: {{ analyst if analyst else 'analyst@metasleuth' }}<br>
+            Tool: MetaSleuth v{{ version if version else '1.0.0' }}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

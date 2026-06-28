@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Correlations{% endblock %}
+{% block breadcrumb %}Analyze / <span>Cross-File Correlations</span>{% endblock %}
+
+{% block extra_styles %}
+.corr-card {
+    padding:16px; border-radius:12px;
+    background:var(--surface); border:1px solid rgba(123,47,255,0.2);
+    margin-bottom:10px;
+}
+.corr-val  { font-size:14px; font-weight:600; color:var(--violet); margin-bottom:4px; }
+.corr-meta { font-size:11px; font-family:var(--mono); color:var(--muted); }
+.two-col   { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+{% endblock %}
+
+{% block content %}
+
+<div>
+    <div class="page-title">🔗 Cross-File Correlations</div>
+    <div class="page-sub">Patterns and connections across all analyzed evidence</div>
+</div>
+
+<div class="two-col">
+
+    <!-- Shared authors -->
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-title">
+                <span class="dot v"></span>Shared Authors
+            </div>
+        </div>
+        <div class="panel-body">
+            {% if shared_authors %}
+                {% for row in shared_authors %}
+                <div class="corr-card">
+                    <div class="corr-val">{{ row['author'] }}</div>
+                    <div class="corr-meta">
+                        Found in {{ row['file_count'] }} file{{ 's' if row['file_count'] != 1 }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">
+                    <div class="empty-icon">👤</div>
+                    No shared authors detected yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Shared GPS -->
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-title">
+                <span class="dot o"></span>Shared GPS Locations
+            </div>
+        </div>
+        <div class="panel-body">
+            {% if shared_gps %}
+                {% for row in shared_gps %}
+                <div class="corr-card" style="border-color:rgba(0,212,255,0.2)">
+                    <div class="corr-val" style="color:var(--cyan)">{{ row['gps'] }}</div>
+                    <div class="corr-meta">
+                        Found in {{ row['file_count'] }} file{{ 's' if row['file_count'] != 1 }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">
+                    <div class="empty-icon">📍</div>
+                    No shared GPS locations detected yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
