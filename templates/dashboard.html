@@ -1,1651 +1,1260 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard{% endblock %}
 {% block breadcrumb %}Case #001 / <span>Dashboard</span>{% endblock %}
+
+{% block extra_styles %}
+
+.scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow: 0 0 16px var(--cyan);
+    animation: scan 3s ease-in-out infinite;
+    top: 0;
+}
+
+@keyframes scan {
+    0%   { top: -2px; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+.upload-zone {
+    border: 1.5px dashed rgba(0, 212, 255, 0.25);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(123, 47, 255, 0.07), rgba(0, 212, 255, 0.04));
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 40px rgba(0, 212, 255, 0.12);
+}
+
+.upload-icon {
+    font-size: 44px;
+    margin-bottom: 14px;
+    filter: drop-shadow(0 0 16px var(--cyan));
+}
+
+.upload-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.upload-title em {
+    color: var(--cyan);
+    font-style: normal;
+}
+
+.upload-sub {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+
+.type-badges {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.badge {
+    padding: 3px 11px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-family: var(--mono);
+    border: 1px solid;
+}
+
+.badge.img { color: var(--cyan);   border-color: rgba(0, 212, 255, 0.3);  background: rgba(0, 212, 255, 0.07); }
+.badge.doc { color: var(--violet); border-color: rgba(123, 47, 255, 0.3); background: rgba(123, 47, 255, 0.07); }
+.badge.aud { color: var(--ok);     border-color: rgba(0, 255, 157, 0.3);  background: rgba(0, 255, 157, 0.07); }
+.badge.vid { color: var(--warn);   border-color: rgba(255, 170, 0, 0.3);  background: rgba(255, 170, 0, 0.07); }
+
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 26px;
+    background: linear-gradient(135deg, var(--cyan), var(--violet));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--sans);
+    box-shadow: 0 0 28px rgba(0, 212, 255, 0.3);
+    transition: all 0.2s;
+}
+
+.upload-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 40px rgba(0, 212, 255, 0.5);
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+}
+
+.stat-card {
+    background: rgba(14, 14, 31, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent, var(--cyan));
+    opacity: 0.5;
+}
+
+.stat-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.stat-meta {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    margin-top: 5px;
+}
+
+.c-cyan   { color: var(--cyan);   text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);  --accent: var(--cyan); }
+.c-violet { color: var(--violet); text-shadow: 0 0 20px rgba(123, 47, 255, 0.5); --accent: var(--violet); }
+.c-ok     { color: var(--ok);     text-shadow: 0 0 20px rgba(0, 255, 157, 0.5);  --accent: var(--ok); }
+.c-warn   { color: var(--warn);   text-shadow: 0 0 20px rgba(255, 170, 0, 0.5);  --accent: var(--warn); }
+.c-alert  { color: var(--alert);  text-shadow: 0 0 20px rgba(255, 51, 102, 0.5); --accent: var(--alert); }
+
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+}
+
+.three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.file-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 70px 60px 80px 36px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+}
+
+.file-row:hover {
+    border-color: var(--border-bright);
+}
+
+.file-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.file-hash {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.file-size,
+.file-time {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+}
+
+.del-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 51, 102, 0.3);
+    background: rgba(255, 51, 102, 0.08);
+    color: var(--alert);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.del-btn:hover {
+    background: rgba(255, 51, 102, 0.2);
+    border-color: var(--alert);
+}
+
+.ind-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ind-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border-left: 3px solid;
+}
+
+.ind-item.HIGH   { border-color: var(--alert);  background: rgba(255, 51, 102, 0.05); }
+.ind-item.MEDIUM { border-color: var(--warn);   background: rgba(255, 170, 0, 0.05); }
+.ind-item.LOW    { border-color: var(--ok);     background: rgba(0, 255, 157, 0.04); }
+
+.ind-desc { font-size: 12px; font-weight: 500; }
+.ind-file { font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 2px; }
+
+.corr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.corr-card {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid rgba(123, 47, 255, 0.2);
+}
+
+.corr-val  { font-size: 13px; font-weight: 600; color: var(--violet); }
+.corr-meta { font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 3px; }
+
+.tl {
+    display: flex;
+    flex-direction: column;
+}
+
+.tl-item {
+    display: flex;
+    gap: 14px;
+    padding-bottom: 16px;
+}
+
+.tl-item:last-child {
+    padding-bottom: 0;
+}
+
+.tl-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tl-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+}
+
+.tl-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    margin-top: 4px;
+}
+
+.tl-event { font-size: 13px; font-weight: 500; }
+.tl-date  { font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 2px; }
+.tl-file  { font-size: 10px; font-family: var(--mono); color: var(--cyan);  margin-top: 2px; }
+
+.audit-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.audit-row {
+    display: grid;
+    grid-template-columns: 140px 70px 1fr;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 11px;
+    font-family: var(--mono);
+    align-items: center;
+}
+
+.audit-row:last-child {
+    border-bottom: none;
+}
+
+.audit-time   { color: var(--muted); }
+.audit-action { color: var(--cyan); }
+.audit-detail { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.bar-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+}
+
+.bar-track {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 100px;
+}
+
+.bf-cyan   { background: linear-gradient(90deg, var(--cyan),   rgba(0, 212, 255, 0.4));  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4); }
+.bf-violet { background: linear-gradient(90deg, var(--violet), rgba(123, 47, 255, 0.4)); box-shadow: 0 0 8px rgba(123, 47, 255, 0.4); }
+.bf-warn   { background: linear-gradient(90deg, var(--warn),   rgba(255, 170, 0, 0.4));  box-shadow: 0 0 8px rgba(255, 170, 0, 0.4); }
+
+.page-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+}
+
+#upload-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 7, 16, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+
+#upload-overlay.show {
+    display: flex;
+}
+
+.overlay-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 48px;
+    text-align: center;
+    min-width: 340px;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 212, 255, 0.15);
+    border-top-color: var(--cyan);
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.overlay-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.overlay-sub   { font-size: 12px; font-family: var(--mono); color: var(--muted); }
+
+#dash-toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 300;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 300px;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+#dash-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.toast-body  { font-size: 11px; font-family: var(--mono); color: var(--muted); }
+
+#file-input {
+    display: none;
+}
+
+#results-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 7, 16, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 400;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+#results-modal.show {
+    display: flex;
+}
+
+.results-box {
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    border-radius: 16px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 0 60px rgba(0, 212, 255, 0.15);
+}
+
+.results-head {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    z-index: 1;
+}
+
+.results-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.results-filename {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--cyan);
+    margin-top: 4px;
+}
+
+.results-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.results-close:hover {
+    border-color: var(--border-bright);
+    color: var(--cyan);
+}
+
+.results-body {
+    padding: 24px 28px;
+}
+
+.results-section {
+    margin-bottom: 24px;
+}
+
+.results-section:last-child {
+    margin-bottom: 0;
+}
+
+.results-section-title {
+    font-size: 11px;
+    font-family: var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.results-meta-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.results-meta-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 12px;
+    align-items: baseline;
+}
+
+.results-meta-row:last-child {
+    border-bottom: none;
+}
+
+.results-meta-key {
+    font-family: var(--mono);
+    color: var(--muted);
+}
+
+.results-meta-val {
+    font-family: var(--mono);
+    color: var(--text);
+    word-break: break-all;
+}
+
+.results-ind-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border-left: 3px solid;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.results-ind-item:last-child {
+    margin-bottom: 0;
+}
+
+.results-ind-item.HIGH   { border-color: var(--alert);  background: rgba(255, 51, 102, 0.05); }
+.results-ind-item.MEDIUM { border-color: var(--warn);   background: rgba(255, 170, 0, 0.05); }
+.results-ind-item.LOW    { border-color: var(--ok);     background: rgba(0, 255, 157, 0.04); }
+
+.results-empty {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-align: center;
+    padding: 16px;
+}
+
+.results-footer {
+    padding: 18px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+{% endblock %}
+
+
 {% block content %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MetaSleuth — DFIR Toolkit</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
-
-        :root {
-            --void:          #070710;
-            --panel:         #0e0e1f;
-            --surface:       #13132a;
-            --border:        rgba(0, 212, 255, 0.15);
-            --border-bright: rgba(0, 212, 255, 0.5);
-            --cyan:          #00d4ff;
-            --violet:        #7b2fff;
-            --alert:         #ff3366;
-            --warn:          #ffaa00;
-            --ok:            #00ff9d;
-            --text:          #e2e8f0;
-            --muted:         #6b7a99;
-            --mono:          'JetBrains Mono', monospace;
-            --sans:          'Space Grotesk', sans-serif;
-        }
-
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: var(--void);
-            color: var(--text);
-            font-family: var(--sans);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* ── GRID BACKGROUND ── */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-            background-size: 48px 48px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* ── AMBIENT GLOW ORBS ── */
-        .orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .orb-a {
-            width: 500px;
-            height: 500px;
-            background: rgba(123, 47, 255, 0.18);
-            top: -100px;
-            right: -100px;
-        }
-
-        .orb-b {
-            width: 400px;
-            height: 400px;
-            background: rgba(0, 212, 255, 0.12);
-            bottom: 100px;
-            left: -80px;
-        }
-
-        .orb-c {
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 51, 102, 0.08);
-            top: 50%;
-            left: 40%;
-        }
-
-        /* ── APP WRAPPER ── */
-        .app {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* ════════════════════════════════════════
-        SIDEBAR
-        ════════════════════════════════════════ */
-        .sidebar {
-            width: 240px;
-            flex-shrink: 0;
-            background: rgba(14, 14, 31, 0.85);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 0;
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            padding: 0 24px 28px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 20px;
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--cyan), var(--violet));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
-        }
-
-        .logo-name {
-            font-size: 17px;
-            font-weight: 700;
-        }
-
-        .logo-sub {
-            font-size: 9px;
-            font-family: var(--mono);
-            color: var(--cyan);
-            letter-spacing: 0.15em;
-        }
-
-        .nav {
-            flex: 1;
-            padding: 0 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .nav-label {
-            font-size: 9px;
-            font-family: var(--mono);
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--muted);
-            padding: 14px 12px 5px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--muted);
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-
-        .nav-item:hover {
-            color: var(--text);
-            background: rgba(255, 255, 255, 0.04);
-            border-color: var(--border);
-        }
-
-        .nav-item.active {
-            color: var(--cyan);
-            background: rgba(0, 212, 255, 0.08);
-            border-color: rgba(0, 212, 255, 0.25);
-        }
-
-        .sidebar-foot {
-            padding: 16px 24px;
-            border-top: 1px solid var(--border);
-            font-size: 11px;
-            font-family: var(--mono);
-            color: var(--muted);
-            line-height: 1.7;
-        }
-
-        .live-dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: var(--ok);
-            border-radius: 50%;
-            margin-right: 5px;
-            box-shadow: 0 0 6px var(--ok);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.3; }
-        }
-
-        /* ════════════════════════════════════════
-        MAIN AREA
-        ════════════════════════════════════════ */
-        .main {
-            margin-left: 240px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ── TOPBAR ── */
-        .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: rgba(7, 7, 16, 0.9);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            padding: 13px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-
-        .breadcrumb {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--muted);
-        }
-
-        .breadcrumb span {
-            color: var(--text);
-        }
-
-        .search-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 7px 14px;
-            width: 280px;
-            transition: border-color 0.2s;
-        }
-
-        .search-wrap:focus-within {
-            border-color: var(--border-bright);
-        }
-
-        .search-wrap input {
-            background: none;
-            border: none;
-            outline: none;
-            font-size: 13px;
-            color: var(--text);
-            font-family: var(--mono);
-            width: 100%;
-        }
-
-        .search-wrap input::placeholder {
-            color: var(--muted);
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .icon-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--muted);
-            transition: all 0.2s;
-        }
-
-        .icon-btn:hover {
-            border-color: var(--border-bright);
-            color: var(--cyan);
-        }
-
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, var(--violet), var(--cyan));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 0 12px rgba(123, 47, 255, 0.4);
-        }
-
-        /* ════════════════════════════════════════
-        CONTENT
-        ════════════════════════════════════════ */
-        .content {
-            padding: 28px 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* ── ALERT BANNER ── */
-        .alert-banner {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            background: rgba(255, 51, 102, 0.07);
-            border: 1px solid rgba(255, 51, 102, 0.25);
-            border-radius: 10px;
-            font-size: 13px;
-        }
-
-        .alert-banner strong {
-            color: var(--alert);
-        }
-
-        /* ── UPLOAD ZONE ── */
-        .upload-zone {
-            border: 1.5px dashed rgba(0, 212, 255, 0.25);
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            background: linear-gradient(
-                135deg,
-                rgba(123, 47, 255, 0.07),
-                rgba(0, 212, 255, 0.04)
-            );
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .upload-zone:hover,
-        .upload-zone.dragover {
-            border-color: var(--cyan);
-            box-shadow: 0 0 40px rgba(0, 212, 255, 0.12);
-        }
-
-        /* Scan line animation */
-        .scan-line {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-            box-shadow: 0 0 16px var(--cyan);
-            animation: scan 3s ease-in-out infinite;
-            top: 0;
-        }
-
-        @keyframes scan {
-            0%   { top: -2px; opacity: 0; }
-            10%  { opacity: 1; }
-            90%  { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        .upload-icon {
-            font-size: 44px;
-            margin-bottom: 14px;
-            filter: drop-shadow(0 0 16px var(--cyan));
-        }
-
-        .upload-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .upload-title em {
-            color: var(--cyan);
-            font-style: normal;
-        }
-
-        .upload-sub {
-            font-size: 12px;
-            font-family: var(--mono);
-            color: var(--muted);
-            margin-bottom: 20px;
-        }
-
-        .type-badges {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .badge {
-            padding: 3px 11px;
-            border-radius: 100px;
-            font-size: 11px;
-            font-family: var(--mono);
-            border: 1px solid;
-        }
-
-        .badge.img {
-            color: var(--cyan);
-            border-color: rgba(0, 212, 255, 0.3);
-            background: rgba(0, 212, 255, 0.07);
-        }
-
-        .badge.doc {
-            color: var(--violet);
-            border-color: rgba(123, 47, 255, 0.3);
-            background: rgba(123, 47, 255, 0.07);
-        }
-
-        .badge.aud {
-            color: var(--ok);
-            border-color: rgba(0, 255, 157, 0.3);
-            background: rgba(0, 255, 157, 0.07);
-        }
-
-        .badge.vid {
-            color: var(--warn);
-            border-color: rgba(255, 170, 0, 0.3);
-            background: rgba(255, 170, 0, 0.07);
-        }
-
-        /* ── BUTTONS ── */
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 11px 26px;
-            background: linear-gradient(135deg, var(--cyan), var(--violet));
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: var(--sans);
-            box-shadow: 0 0 28px rgba(0, 212, 255, 0.3);
-            transition: all 0.2s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 0 40px rgba(0, 212, 255, 0.5);
-        }
-
-        .btn-outline {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 7px 16px;
-            border: 1px solid var(--border-bright);
-            border-radius: 8px;
-            background: transparent;
-            color: var(--cyan);
-            font-size: 12px;
-            font-family: var(--mono);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-outline:hover {
-            background: rgba(0, 212, 255, 0.08);
-        }
-
-        /* ── STATS ROW ── */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 14px;
-        }
-
-        .stat-card {
-            background: rgba(14, 14, 31, 0.8);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 18px;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card:hover {
-            border-color: var(--border-bright);
-            transform: translateY(-2px);
-        }
-
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--c, var(--cyan));
-            opacity: 0.5;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            font-family: var(--mono);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 30px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .stat-meta {
-            font-size: 11px;
-            font-family: var(--mono);
-            color: var(--muted);
-            margin-top: 5px;
-        }
-
-        /* Colour helpers */
-        .c-cyan   { color: var(--cyan);   text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);  --c: var(--cyan); }
-        .c-violet { color: var(--violet); text-shadow: 0 0 20px rgba(123, 47, 255, 0.5); --c: var(--violet); }
-        .c-ok     { color: var(--ok);     text-shadow: 0 0 20px rgba(0, 255, 157, 0.5);  --c: var(--ok); }
-        .c-warn   { color: var(--warn);   text-shadow: 0 0 20px rgba(255, 170, 0, 0.5);  --c: var(--warn); }
-        .c-alert  { color: var(--alert);  text-shadow: 0 0 20px rgba(255, 51, 102, 0.5); --c: var(--alert); }
-
-        /* ── LAYOUT GRIDS ── */
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 20px;
-        }
-
-        .three-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-        }
-
-        /* ── PANEL ── */
-        .panel {
-            background: rgba(14, 14, 31, 0.8);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            overflow: hidden;
-        }
-
-        .panel-head {
-            padding: 16px 22px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .panel-title {
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--cyan);
-            box-shadow: 0 0 8px var(--cyan);
-        }
-
-        .dot.v { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
-        .dot.a { background: var(--alert);  box-shadow: 0 0 8px var(--alert); }
-        .dot.o { background: var(--ok);     box-shadow: 0 0 8px var(--ok); }
-
-        .panel-body {
-            padding: 18px 22px;
-        }
-
-        /* ── FILE LIST ── */
-        .file-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .file-row {
-            display: grid;
-            grid-template-columns: 36px 1fr 70px 60px 80px;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 10px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .file-row:hover {
-            border-color: var(--border-bright);
-        }
-
-        /* Shimmer sweep on hover */
-        .file-row::after {
-            content: '';
-            position: absolute;
-            left: -100%;
-            top: 0;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(0, 212, 255, 0.05),
-                transparent
-            );
-            transition: left 0.5s;
-        }
-
-        .file-row:hover::after {
-            left: 150%;
-        }
-
-        .file-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-        }
-
-        .fi-image { background: rgba(0,   212, 255, 0.1); }
-        .fi-pdf   { background: rgba(255,  51, 102, 0.1); }
-        .fi-word  { background: rgba(123,  47, 255, 0.1); }
-        .fi-audio { background: rgba(0,   255, 157, 0.1); }
-        .fi-video { background: rgba(255, 170,   0, 0.1); }
-        .fi-zip   { background: rgba(255, 255, 255, 0.06); }
-
-        .file-name {
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .file-hash {
-            font-size: 10px;
-            font-family: var(--mono);
-            color: var(--muted);
-            margin-top: 2px;
-        }
-
-        .file-size {
-            font-size: 11px;
-            font-family: var(--mono);
-            color: var(--muted);
-        }
-
-        .file-time {
-            font-size: 11px;
-            font-family: var(--mono);
-            color: var(--muted);
-        }
-
-        /* Severity chips */
-        .sev-chip {
-            padding: 3px 8px;
-            border-radius: 100px;
-            font-size: 10px;
-            font-family: var(--mono);
-            font-weight: 600;
-            border: 1px solid;
-            white-space: nowrap;
-        }
-
-        .sev-HIGH   { color: var(--alert);  border-color: rgba(255,  51, 102, 0.3); background: rgba(255,  51, 102, 0.1); }
-        .sev-MEDIUM { color: var(--warn);   border-color: rgba(255, 170,   0, 0.3); background: rgba(255, 170,   0, 0.1); }
-        .sev-LOW    { color: var(--ok);     border-color: rgba(0,   255, 157, 0.25); background: rgba(0,  255, 157, 0.07); }
-        .sev-NONE   { color: var(--muted);  border-color: var(--border);             background: transparent; }
-
-        /* ── INDICATOR LIST ── */
-        .ind-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .ind-item {
-            padding: 10px 12px;
-            border-radius: 8px;
-            border-left: 3px solid;
-            display: flex;
-            gap: 9px;
-        }
-
-        .ind-item.HIGH   { border-color: var(--alert);  background: rgba(255,  51, 102, 0.05); }
-        .ind-item.MEDIUM { border-color: var(--warn);   background: rgba(255, 170,   0, 0.05); }
-        .ind-item.LOW    { border-color: var(--ok);     background: rgba(0,   255, 157, 0.04); }
-
-        .ind-desc {
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .ind-file {
-            font-size: 10px;
-            font-family: var(--mono);
-            color: var(--muted);
-            margin-top: 2px;
-        }
-
-        /* ── AUDIT LOG ── */
-        .audit-list {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .audit-row {
-            display: grid;
-            grid-template-columns: 140px 70px 1fr;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 11px;
-            font-family: var(--mono);
-            align-items: center;
-        }
-
-        .audit-row:last-child {
-            border-bottom: none;
-        }
-
-        .audit-time   { color: var(--muted); }
-        .audit-action { color: var(--cyan); }
-        .audit-detail {
-            color: var(--text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        /* ── CORRELATION CARDS ── */
-        .corr-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        .corr-card {
-            padding: 12px 14px;
-            border-radius: 10px;
-            background: var(--surface);
-            border: 1px solid rgba(123, 47, 255, 0.2);
-        }
-
-        .corr-val  { font-size: 13px; font-weight: 600; color: var(--violet); }
-        .corr-meta { font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 3px; }
-
-        /* ── TIMELINE ── */
-        .tl {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tl-item {
-            display: flex;
-            gap: 14px;
-            padding-bottom: 16px;
-        }
-
-        .tl-item:last-child {
-            padding-bottom: 0;
-        }
-
-        .tl-left {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .tl-dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            margin-top: 4px;
-            background: var(--cyan);
-            box-shadow: 0 0 8px var(--cyan);
-        }
-
-        .tl-dot.a { background: var(--alert);  box-shadow: 0 0 8px var(--alert); }
-        .tl-dot.o { background: var(--ok);     box-shadow: 0 0 8px var(--ok); }
-        .tl-dot.v { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
-
-        .tl-line {
-            width: 1px;
-            flex: 1;
-            background: var(--border);
-            margin-top: 4px;
-        }
-
-        .tl-event { font-size: 13px; font-weight: 500; }
-        .tl-date  { font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 2px; }
-        .tl-file  { font-size: 10px; font-family: var(--mono); color: var(--cyan);  margin-top: 2px; }
-
-        /* ── EMPTY STATE ── */
-        .empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--muted);
-            font-family: var(--mono);
-            font-size: 13px;
-        }
-
-        .empty-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-            opacity: 0.4;
-        }
-
-        /* ── PROGRESS BARS ── */
-        .bar-row {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-
-        .bar-label {
-            font-size: 11px;
-            font-family: var(--mono);
-            color: var(--muted);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .bar-track {
-            height: 5px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 100px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            border-radius: 100px;
-        }
-
-        .bf-cyan   { background: linear-gradient(90deg, var(--cyan),   rgba(0,   212, 255, 0.4)); box-shadow: 0 0 8px rgba(0,   212, 255, 0.4); }
-        .bf-violet { background: linear-gradient(90deg, var(--violet), rgba(123,  47, 255, 0.4)); box-shadow: 0 0 8px rgba(123,  47, 255, 0.4); }
-        .bf-warn   { background: linear-gradient(90deg, var(--warn),   rgba(255, 170,   0, 0.4)); box-shadow: 0 0 8px rgba(255, 170,   0, 0.4); }
-
-        /* ── UPLOAD PROGRESS OVERLAY ── */
-        #upload-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(7, 7, 16, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #upload-overlay.show {
-            display: flex;
-        }
-
-        .overlay-box {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 40px 48px;
-            text-align: center;
-            min-width: 340px;
-        }
-
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            border: 3px solid rgba(0, 212, 255, 0.15);
-            border-top-color: var(--cyan);
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .overlay-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .overlay-sub {
-            font-size: 12px;
-            font-family: var(--mono);
-            color: var(--muted);
-        }
-
-        /* ── RESULT TOAST ── */
-        #toast {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            z-index: 300;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px 20px;
-            min-width: 300px;
-            transform: translateY(80px);
-            opacity: 0;
-            transition: all 0.3s;
-        }
-
-        #toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .toast-title {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .toast-body {
-            font-size: 11px;
-            font-family: var(--mono);
-            color: var(--muted);
-        }
-
-        /* ── PAGE FOOTER ── */
-        .page-foot {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 0;
-            border-top: 1px solid var(--border);
-            font-size: 11px;
-            font-family: var(--mono);
-            color: var(--muted);
-        }
-
-        /* Hidden file input */
-        #file-input {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- ── AMBIENT GLOW ── -->
-    <div class="orb orb-a"></div>
-    <div class="orb orb-b"></div>
-    <div class="orb orb-c"></div>
-
-    <!-- ── UPLOAD PROGRESS OVERLAY ── -->
-    <div id="upload-overlay">
-        <div class="overlay-box">
-            <div class="spinner"></div>
-            <div class="overlay-title">Analyzing Evidence&hellip;</div>
-            <div class="overlay-sub" id="overlay-status">Calculating hashes&hellip;</div>
+<div id="upload-overlay">
+    <div class="overlay-box">
+        <div class="spinner"></div>
+        <div class="overlay-title">Analyzing Evidence&hellip;</div>
+        <div class="overlay-sub" id="overlay-status">Calculating hashes&hellip;</div>
+    </div>
+</div>
+
+<div id="dash-toast">
+    <div class="toast-title" id="dash-toast-title"></div>
+    <div class="toast-body"  id="dash-toast-body"></div>
+</div>
+
+<div id="results-modal">
+    <div class="results-box">
+
+        <div class="results-head">
+            <div>
+                <div class="results-title">Analysis Complete</div>
+                <div class="results-filename" id="results-filename">filename.jpg</div>
+            </div>
+            <button class="results-close" onclick="closeResultsModal()">&#10005;</button>
+        </div>
+
+        <div class="results-body">
+
+            <div class="results-section">
+                <div class="results-section-title">File Integrity</div>
+                <div class="results-meta-grid" id="results-hashes"></div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-section-title">Extracted Metadata</div>
+                <div class="results-meta-grid" id="results-metadata"></div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-section-title">Forensic Indicators</div>
+                <div id="results-indicators"></div>
+            </div>
+
+        </div>
+
+        <div class="results-footer">
+            <button class="btn-outline" onclick="closeResultsModalAndReload()">Close</button>
+        </div>
+
+    </div>
+</div>
+
+<input
+    type="file"
+    id="file-input"
+    accept=".jpg,.jpeg,.png,.tiff,.pdf,.docx,.mp3,.wav,.flac,.mp4,.mov,.zip"
+/>
+
+{% if stats.high > 0 %}
+<div style="
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255, 51, 102, 0.07);
+    border: 1px solid rgba(255, 51, 102, 0.25);
+    border-radius: 10px;
+    font-size: 13px;
+">
+    <span>&#9888;</span>
+    <strong style="color: var(--alert);">
+        {{ stats.high }} High-Severity Indicator{{ 's' if stats.high != 1 }} Detected
+    </strong>
+    &nbsp;&mdash; Review flagged files immediately.
+</div>
+{% endif %}
+
+<div class="upload-zone" id="drop-zone">
+    <div class="scan-line"></div>
+    <div class="upload-icon">&#128737;</div>
+    <div class="upload-title">
+        Drop Evidence to <em>Begin Analysis</em>
+    </div>
+    <div class="upload-sub">
+        // single files &nbsp;&middot;&nbsp; folders &nbsp;&middot;&nbsp; batch ZIP uploads
+    </div>
+    <div class="type-badges">
+        <span class="badge img">JPEG &middot; PNG &middot; TIFF</span>
+        <span class="badge doc">PDF &middot; DOCX</span>
+        <span class="badge aud">MP3 &middot; WAV &middot; FLAC</span>
+        <span class="badge vid">MP4 &middot; MOV</span>
+    </div>
+    <button
+        class="upload-btn"
+        onclick="document.getElementById('file-input').click()"
+    >
+        &#128193; Browse Files
+    </button>
+</div>
+
+<div class="stats-row">
+
+    <div class="stat-card">
+        <div class="stat-label">Total Analyzed</div>
+        <div class="stat-value c-cyan">{{ stats.total }}</div>
+        <div class="stat-meta">files in database</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Images</div>
+        <div class="stat-value c-violet">{{ stats.images }}</div>
+        <div class="stat-meta">JPEG &middot; PNG &middot; TIFF</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Documents</div>
+        <div class="stat-value c-ok">{{ stats.documents }}</div>
+        <div class="stat-meta">PDF &middot; DOCX</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Indicators</div>
+        <div class="stat-value c-warn">{{ stats.total_indicators }}</div>
+        <div class="stat-meta">{{ stats.high }} high severity</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">High Severity</div>
+        <div class="stat-value c-alert">{{ stats.high }}</div>
+        <div class="stat-meta">require review</div>
+    </div>
+
+</div>
+
+<div class="two-col">
+
+    <div class="panel">
+
+        <div class="panel-head">
+            <div class="panel-title">
+                <span class="dot"></span>
+                Evidence Files
+            </div>
+            <button
+                class="btn-outline"
+                onclick="document.getElementById('file-input').click()"
+            >
+                + Add Evidence
+            </button>
+        </div>
+
+        <div class="panel-body">
+
+            {% if files %}
+            <div class="file-list">
+                {% for f in files %}
+
+                <div class="file-row" id="file-row-{{ f.id }}">
+
+                    <a
+                        href="/file/{{ f.id }}"
+                        style="display: contents; text-decoration: none; color: inherit;"
+                    >
+
+                        <div class="file-icon
+                            {% if   f.file_type == 'image' %} fi-image
+                            {% elif f.file_type == 'pdf'   %} fi-pdf
+                            {% elif f.file_type == 'word'  %} fi-word
+                            {% elif f.file_type == 'audio' %} fi-audio
+                            {% elif f.file_type == 'video' %} fi-video
+                            {% else %}                         fi-zip
+                            {% endif %}">
+                            {% if   f.file_type == 'image' %}&#128444;
+                            {% elif f.file_type == 'pdf'   %}&#128196;
+                            {% elif f.file_type == 'word'  %}&#128221;
+                            {% elif f.file_type == 'audio' %}&#127925;
+                            {% elif f.file_type == 'video' %}&#127916;
+                            {% else %}&#128230;
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <div class="file-name">{{ f.filename }}</div>
+                            <div class="file-hash">
+                                sha256:&nbsp;{{ f.sha256[:16] if f.sha256 else 'N/A' }}&hellip;
+                            </div>
+                        </div>
+
+                        <div class="file-size">
+                            {% if f.file_size %}
+                                {% if f.file_size > 1048576 %}
+                                    {{ "%.1f"|format(f.file_size / 1048576) }} MB
+                                {% else %}
+                                    {{ "%.0f"|format(f.file_size / 1024) }} KB
+                                {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <div class="file-time">
+                            {{ f.upload_time[11:16] if f.upload_time else '' }}
+                        </div>
+
+                        <span class="sev-chip sev-{{ f.highest_severity or 'NONE' }}">
+                            {% if   f.highest_severity == 'HIGH'   %}&#9888; HIGH
+                            {% elif f.highest_severity == 'MEDIUM' %}&#9889; MED
+                            {% elif f.highest_severity == 'LOW'    %}&#10003; LOW
+                            {% else %}&mdash; NONE
+                            {% endif %}
+                        </span>
+
+                    </a>
+
+                    <button
+                        class="del-btn"
+                        title="Delete this file"
+                        onclick="openDeleteModal({{ f.id }}, '{{ f.filename }}')"
+                    >
+                        &#128465;
+                    </button>
+
+                </div>
+
+                {% endfor %}
+            </div>
+
+            {% else %}
+            <div class="empty">
+                <div class="empty-icon">&#128194;</div>
+                No evidence files yet.<br>
+                Drop a file above to begin.
+            </div>
+            {% endif %}
+
         </div>
     </div>
 
-    <!-- ── RESULT TOAST ── -->
-    <div id="toast">
-        <div class="toast-title" id="toast-title"></div>
-        <div class="toast-body"  id="toast-body"></div>
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+
+        <div class="panel">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="dot a"></span>
+                    Recent Indicators
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="ind-list" id="indicator-panel">
+                    <div class="empty">
+                        <div class="empty-icon">&#9888;</div>
+                        Indicators appear here after analysis.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="dot v"></span>
+                    Cross-File Correlations
+                </div>
+            </div>
+            <div class="panel-body">
+                {% if correlations.shared_authors %}
+                    <div style="
+                        font-size: 10px;
+                        font-family: var(--mono);
+                        color: var(--muted);
+                        letter-spacing: 0.1em;
+                        text-transform: uppercase;
+                        margin-bottom: 10px;
+                    ">
+                        Shared Authors
+                    </div>
+                    <div class="corr-grid">
+                        {% for row in correlations.shared_authors %}
+                        <div class="corr-card">
+                            <div class="corr-val">{{ row.author }}</div>
+                            <div class="corr-meta">{{ row.file_count }} files</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty" style="padding: 20px 0;">
+                        <div class="empty-icon">&#128279;</div>
+                        No correlations yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="three-col">
+
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-title">
+                <span class="dot"></span>
+                Forensic Timeline
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="tl" id="timeline-panel">
+                <div class="empty">
+                    <div class="empty-icon">&#128336;</div>
+                    Timeline builds after first upload.
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ── HIDDEN FILE INPUT ── -->
-    <input
-        type="file"
-        id="file-input"
-        accept=".jpg,.jpeg,.png,.tiff,.pdf,.docx,.mp3,.wav,.flac,.mp4,.mov,.zip"
-    />
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-title">
+                <span class="dot o"></span>
+                Chain of Custody
+            </div>
+        </div>
+        <div class="panel-body">
+            {% if audit_log %}
+                <div class="audit-list">
+                    {% for entry in audit_log[:8] %}
+                    <div class="audit-row">
+                        <span class="audit-time">
+                            {{ entry.timestamp[11:19] if entry.timestamp else '' }}
+                        </span>
+                        <span class="audit-action">{{ entry.action }}</span>
+                        <span class="audit-detail">{{ entry.detail }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">No audit entries yet.</div>
+            {% endif %}
+            <div style="
+                margin-top: 14px;
+                font-size: 10px;
+                font-family: var(--mono);
+                color: var(--muted);
+                line-height: 1.8;
+            ">
+                Tool: MetaSleuth v{{ version }}<br>
+                Analyst: {{ analyst }}
+            </div>
+        </div>
+    </div>
 
-    <div class="app">
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-title">
+                <span class="dot v"></span>
+                File Distribution
+            </div>
+        </div>
+        <div class="panel-body">
+            {% set total = stats.total if stats.total > 0 else 1 %}
 
-        <!-- ════════════════════════════════════════
-            SIDEBAR
-        ════════════════════════════════════════ -->
-        <aside class="sidebar">
+            <div class="bar-row">
+                <div class="bar-label">
+                    <span>Images</span>
+                    <span>{{ stats.images }}</span>
+                </div>
+                <div class="bar-track">
+                    <div
+                        class="bar-fill bf-cyan"
+                        style="width: {{ (stats.images / total * 100) | int }}%"
+                    ></div>
+                </div>
+            </div>
 
-            <div class="logo">
-                <div class="logo-icon">🔍</div>
+            <div class="bar-row">
+                <div class="bar-label">
+                    <span>Documents</span>
+                    <span>{{ stats.documents }}</span>
+                </div>
+                <div class="bar-track">
+                    <div
+                        class="bar-fill bf-violet"
+                        style="width: {{ (stats.documents / total * 100) | int }}%"
+                    ></div>
+                </div>
+            </div>
+
+            <div class="bar-row">
+                <div class="bar-label">
+                    <span>High Indicators</span>
+                    <span>{{ stats.high }}</span>
+                </div>
+                <div class="bar-track">
+                    <div
+                        class="bar-fill bf-warn"
+                        style="width: {{ [stats.high * 10, 100] | min }}%"
+                    ></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="page-foot">
+    <span>MetaSleuth v{{ version }} &nbsp;&middot;&nbsp; {{ analyst }}</span>
+    <a href="#" class="btn-outline">&#128196; Export Case Report</a>
+</div>
+
+{% if gps_findings %}
+<div class="panel">
+    <div class="panel-head">
+        <div class="panel-title">
+            <span class="dot o"></span>
+            GPS Locations Detected
+        </div>
+        <span style="font-size:11px; font-family:var(--mono); color:var(--alert);">
+            &#9888; {{ gps_findings|length }} file{{ 's' if gps_findings|length != 1 }} contain location data
+        </span>
+    </div>
+    <div class="panel-body">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for g in gps_findings %}
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:var(--surface); border:1px solid rgba(0,212,255,0.2); border-radius:10px;">
                 <div>
-                    <div class="logo-name">MetaSleuth</div>
-                    <div class="logo-sub">DFIR TOOLKIT</div>
+                    <div style="font-size:13px; font-weight:500;">{{ g.filename }}</div>
+                    <div style="font-size:11px; font-family:var(--mono); color:var(--cyan); margin-top:3px;">
+                        &#128205; {{ g.gps }}
+                    </div>
                 </div>
-            </div>
-
-            <nav class="nav">
-
-                <div class="nav-label">Investigate</div>
-                <a class="nav-item {% if request.path == '/' %}active{% endif %}"
-                   href="/">
-                    ⬡ &nbsp; Dashboard
-                </a>
-                <a class="nav-item {% if request.path == '/evidence' %}active{% endif %}"
-                   href="/evidence">
-                    📂 &nbsp; Evidence Files
-                </a>
-                <a class="nav-item {% if request.path == '/timeline' %}active{% endif %}"
-                   href="/timeline">
-                    🕐 &nbsp; Timeline
-                </a>
-                <a class="nav-item {% if request.path == '/indicators' %}active{% endif %}"
-                   href="/indicators">
-                    ⚠ &nbsp; Indicators
-                </a>
-            
-                <div class="nav-label">Analyze</div>
-                <a class="nav-item {% if request.path == '/search' %}active{% endif %}"
-                   href="/search">
-                    🔎 &nbsp; Search Metadata
-                </a>
-                <a class="nav-item {% if request.path == '/correlations' %}active{% endif %}"
-                   href="/correlations">
-                    🔗 &nbsp; Correlations
-                </a>
-            
-                <div class="nav-label">Case</div>
-                <a class="nav-item {% if request.path == '/cases' %}active{% endif %}"
-                   href="/cases">
-                    📋 &nbsp; Case Manager
-                </a>
-                <a class="nav-item {% if request.path == '/auditlog' %}active{% endif %}"
-                   href="/auditlog">
-                    📜 &nbsp; Audit Log
-                </a>
-            
-            </nav>
-
-            <div class="sidebar-foot">
-                <span class="live-dot"></span>Online<br>
-                v{{ version }}<br>
-                {{ analyst }}
-            </div>
-
-        </aside>
-
-        <!-- ════════════════════════════════════════
-            MAIN
-        ════════════════════════════════════════ -->
-        <div class="main">
-
-            <!-- ── TOPBAR ── -->
-            <div class="topbar">
-
-                <div class="breadcrumb">
-                    Case #001 &nbsp;/&nbsp; <span>Dashboard</span>
-                </div>
-
-                <form class="search-wrap" action="/search" method="GET">
-                    <span>🔍</span>
-                    <input
-                        name="q"
-                        type="text"
-                        placeholder="Search author, GPS, hash, software&hellip;"
-                    />
-                </form>
-
-                <div class="topbar-right">
-                    <div class="icon-btn">🔔</div>
-                    <div class="icon-btn">⚙</div>
-                    <div class="avatar">AN</div>
-                </div>
-
-            </div>
-
-            <!-- ── CONTENT ── -->
-            <div class="content">
-
-                <!-- Alert banner — only shows if HIGH indicators exist -->
-                {% if stats.high > 0 %}
-                <div class="alert-banner">
-                    ⚠ &nbsp;
-                    <strong>
-                        {{ stats.high }} High-Severity Indicator{{ 's' if stats.high != 1 }} Detected
-                    </strong>
-                    &nbsp;— Review flagged files immediately.
-                </div>
-                {% endif %}
-
-                <!-- ── UPLOAD ZONE ── -->
-                <div class="upload-zone" id="drop-zone">
-                    <div class="scan-line"></div>
-                    <div class="upload-icon">🛡</div>
-                    <div class="upload-title">
-                        Drop Evidence to <em>Begin Analysis</em>
-                    </div>
-                    <div class="upload-sub">
-                        // single files &nbsp;&middot;&nbsp; folders &nbsp;&middot;&nbsp; batch ZIP uploads
-                    </div>
-                    <div class="type-badges">
-                        <span class="badge img">JPEG &middot; PNG &middot; TIFF</span>
-                        <span class="badge doc">PDF &middot; DOCX</span>
-                        <span class="badge aud">MP3 &middot; WAV &middot; FLAC</span>
-                        <span class="badge vid">MP4 &middot; MOV</span>
-                    </div>
-                    <button
-                        class="btn-primary"
-                        onclick="document.getElementById('file-input').click()"
-                    >
-                        📁 Browse Files
-                    </button>
-                </div>
-
-                <!-- ── STATS ROW ── -->
-                <div class="stats-row">
-
-                    <div class="stat-card">
-                        <div class="stat-label">Total Analyzed</div>
-                        <div class="stat-value c-cyan">{{ stats.total }}</div>
-                        <div class="stat-meta">files in database</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-label">Images</div>
-                        <div class="stat-value c-violet">{{ stats.images }}</div>
-                        <div class="stat-meta">JPEG &middot; PNG &middot; TIFF</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-label">Documents</div>
-                        <div class="stat-value c-ok">{{ stats.documents }}</div>
-                        <div class="stat-meta">PDF &middot; DOCX</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-label">Indicators</div>
-                        <div class="stat-value c-warn">{{ stats.total_indicators }}</div>
-                        <div class="stat-meta">{{ stats.high }} high severity</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-label">High Severity</div>
-                        <div class="stat-value c-alert">{{ stats.high }}</div>
-                        <div class="stat-meta">require review</div>
-                    </div>
-
-                </div>
-
-                <!-- ── FILES + RIGHT COLUMN ── -->
-                <div class="two-col">
-
-                    <!-- Evidence file list -->
-                    <div class="panel">
-
-                        <div class="panel-head">
-                            <div class="panel-title">
-                                <span class="dot"></span>
-                                Evidence Files
-                            </div>
-                            <button
-                                class="btn-outline"
-                                onclick="document.getElementById('file-input').click()"
-                            >
-                                + Add Evidence
-                            </button>
-                        </div>
-
-                        <div class="panel-body">
-                            {% if files %}
-                                <div class="file-list">
-                                    {% for f in files %}
-                                    <a class="file-row" href="/file/{{ f.id }}">
-
-                                        <!-- File type icon -->
-                                        <div class="file-icon
-                                            {% if   f.file_type == 'image' %} fi-image
-                                            {% elif f.file_type == 'pdf'   %} fi-pdf
-                                            {% elif f.file_type == 'word'  %} fi-word
-                                            {% elif f.file_type == 'audio' %} fi-audio
-                                            {% elif f.file_type == 'video' %} fi-video
-                                            {% else %}                         fi-zip
-                                            {% endif %}">
-                                            {% if   f.file_type == 'image' %}🖼
-                                            {% elif f.file_type == 'pdf'   %}📄
-                                            {% elif f.file_type == 'word'  %}📝
-                                            {% elif f.file_type == 'audio' %}🎵
-                                            {% elif f.file_type == 'video' %}🎬
-                                            {% else %}📦
-                                            {% endif %}
-                                        </div>
-
-                                        <!-- Name + hash -->
-                                        <div>
-                                            <div class="file-name">{{ f.filename }}</div>
-                                            <div class="file-hash">
-                                                sha256:&nbsp;{{ f.sha256[:16] if f.sha256 else 'N/A' }}&hellip;
-                                            </div>
-                                        </div>
-
-                                        <!-- File size -->
-                                        <div class="file-size">
-                                            {% if f.file_size %}
-                                                {% if f.file_size > 1048576 %}
-                                                    {{ "%.1f"|format(f.file_size / 1048576) }} MB
-                                                {% else %}
-                                                    {{ "%.0f"|format(f.file_size / 1024) }} KB
-                                                {% endif %}
-                                            {% endif %}
-                                        </div>
-
-                                        <!-- Upload time (HH:MM) -->
-                                        <div class="file-time">
-                                            {{ f.upload_time[11:16] if f.upload_time else '' }}
-                                        </div>
-
-                                        <!-- Severity chip -->
-                                        <span class="sev-chip sev-{{ f.highest_severity or 'NONE' }}">
-                                            {% if   f.highest_severity == 'HIGH'   %}⚠ HIGH
-                                            {% elif f.highest_severity == 'MEDIUM' %}⚡ MED
-                                            {% elif f.highest_severity == 'LOW'    %}✓ LOW
-                                            {% else %}— NONE
-                                            {% endif %}
-                                        </span>
-
-                                    </a>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="empty">
-                                    <div class="empty-icon">📂</div>
-                                    No evidence files yet.<br>
-                                    Drop a file above to begin.
-                                </div>
-                            {% endif %}
-                        </div>
-
-                    </div><!-- /panel: evidence files -->
-
-                    <!-- Right column -->
-                    <div style="display: flex; flex-direction: column; gap: 18px;">
-
-                        <!-- Recent indicators -->
-                        <div class="panel">
-                            <div class="panel-head">
-                                <div class="panel-title">
-                                    <span class="dot a"></span>
-                                    Recent Indicators
-                                </div>
-                            </div>
-                            <div class="panel-body">
-                                <div class="ind-list" id="indicator-panel">
-                                    <div class="empty">
-                                        <div class="empty-icon">⚠</div>
-                                        Indicators appear here after analysis.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cross-file correlations -->
-                        <div class="panel">
-                            <div class="panel-head">
-                                <div class="panel-title">
-                                    <span class="dot v"></span>
-                                    Cross-File Correlations
-                                </div>
-                            </div>
-                            <div class="panel-body">
-                                {% if correlations.shared_authors %}
-                                    <div style="
-                                        font-size: 10px;
-                                        font-family: var(--mono);
-                                        color: var(--muted);
-                                        letter-spacing: 0.1em;
-                                        text-transform: uppercase;
-                                        margin-bottom: 10px;
-                                    ">
-                                        Shared Authors
-                                    </div>
-                                    <div class="corr-grid">
-                                        {% for row in correlations.shared_authors %}
-                                        <div class="corr-card">
-                                            <div class="corr-val">{{ row.author }}</div>
-                                            <div class="corr-meta">{{ row.file_count }} files</div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <div class="empty" style="padding: 20px 0;">
-                                        <div class="empty-icon">🔗</div>
-                                        No correlations yet.
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                    </div><!-- /right column -->
-
-                </div><!-- /two-col -->
-
-                <!-- ── BOTTOM THREE COLUMNS ── -->
-                <div class="three-col">
-
-                    <!-- Forensic timeline -->
-                    <div class="panel">
-                        <div class="panel-head">
-                            <div class="panel-title">
-                                <span class="dot"></span>
-                                Forensic Timeline
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            <div class="tl" id="timeline-panel">
-                                <div class="empty">
-                                    <div class="empty-icon">🕐</div>
-                                    Timeline builds after first upload.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Chain of custody / audit log -->
-                    <div class="panel">
-                        <div class="panel-head">
-                            <div class="panel-title">
-                                <span class="dot o"></span>
-                                Chain of Custody
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            {% if audit_log %}
-                                <div class="audit-list">
-                                    {% for entry in audit_log[:8] %}
-                                    <div class="audit-row">
-                                        <span class="audit-time">
-                                            {{ entry.timestamp[11:19] if entry.timestamp else '' }}
-                                        </span>
-                                        <span class="audit-action">{{ entry.action }}</span>
-                                        <span class="audit-detail">{{ entry.detail }}</span>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="empty">No audit entries yet.</div>
-                            {% endif %}
-                            <div style="
-                                margin-top: 14px;
-                                font-size: 10px;
-                                font-family: var(--mono);
-                                color: var(--muted);
-                                line-height: 1.8;
-                            ">
-                                Tool: MetaSleuth v{{ version }}<br>
-                                Analyst: {{ analyst }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- File type distribution -->
-                    <div class="panel">
-                        <div class="panel-head">
-                            <div class="panel-title">
-                                <span class="dot v"></span>
-                                File Distribution
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            {% set total = stats.total if stats.total > 0 else 1 %}
-
-                            <div class="bar-row">
-                                <div class="bar-label">
-                                    <span>Images</span>
-                                    <span>{{ stats.images }}</span>
-                                </div>
-                                <div class="bar-track">
-                                    <div
-                                        class="bar-fill bf-cyan"
-                                        style="width: {{ (stats.images / total * 100) | int }}%"
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div class="bar-row">
-                                <div class="bar-label">
-                                    <span>Documents</span>
-                                    <span>{{ stats.documents }}</span>
-                                </div>
-                                <div class="bar-track">
-                                    <div
-                                        class="bar-fill bf-violet"
-                                        style="width: {{ (stats.documents / total * 100) | int }}%"
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div class="bar-row">
-                                <div class="bar-label">
-                                    <span>High Indicators</span>
-                                    <span>{{ stats.high }}</span>
-                                </div>
-                                <div class="bar-track">
-                                    <div
-                                        class="bar-fill bf-warn"
-                                        style="width: {{ [stats.high * 10, 100] | min }}%"
-                                    ></div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div><!-- /three-col -->
-
-                <!-- ── PAGE FOOTER ── -->
-                <div class="page-foot">
-                    <span>MetaSleuth v{{ version }} &nbsp;&middot;&nbsp; {{ analyst }}</span>
-                    <a href="/report/latest" class="btn-outline">
-                        📄 Export Case Report
+                <div style="display:flex; gap:8px;">
+                    <a href="https://maps.google.com/?q={{ g.gps }}" target="_blank" class="btn-outline">
+                        &#128506; Google Maps
                     </a>
+                    <a href="/file/{{ g.id }}" class="btn-outline">View File &rarr;</a>
                 </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="margin-top:12px; font-size:11px; font-family:var(--mono); color:var(--muted);">
+            GPS data in evidence files reveals physical locations.
+            This is a HIGH severity finding in forensic investigations.
+        </div>
+    </div>
+</div>
+{% endif %}
 
-            </div><!-- /content -->
-        </div><!-- /main -->
-    </div><!-- /app -->
+{% endblock %}
 
-    <!-- ════════════════════════════════════════
-        JAVASCRIPT
-    ════════════════════════════════════════ -->
-    <script>
-        // ── ELEMENT REFERENCES ────────────────────────────────────────
-        const dropZone      = document.getElementById('drop-zone');
-        const fileInput     = document.getElementById('file-input');
-        const overlay       = document.getElementById('upload-overlay');
-        const overlayStatus = document.getElementById('overlay-status');
-        const toast         = document.getElementById('toast');
-        const toastTitle    = document.getElementById('toast-title');
-        const toastBody     = document.getElementById('toast-body');
 
-        // ── FILE INPUT CHANGE ─────────────────────────────────────────
-        // Triggered when the user clicks Browse Files and picks a file
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                uploadFile(fileInput.files[0]);
+{% block extra_scripts %}
+<script>
+    const dropZone      = document.getElementById('drop-zone');
+    const fileInput     = document.getElementById('file-input');
+    const UploadOverlay = document.getElementById('upload-overlay');
+    const overlayStatus = document.getElementById('overlay-status');
+    const toast         = document.getElementById('dash-toast');
+    const toastTitle    = document.getElementById('dash-toast-title');
+    const toastBody     = document.getElementById('dash-toast-body');
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            uploadFile(fileInput.files[0]);
+        }
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            uploadFile(file);
+        }
+    });
+
+    async function uploadFile(file) {
+        UploadOverlay.classList.add('show');
+        overlayStatus.textContent = 'Hashing evidence file...';
+
+        const messages = [
+            'Calculating SHA256 hash...',
+            'Extracting metadata...',
+            'Running forensic checks...',
+            'Building timeline...',
+            'Saving to database...',
+        ];
+
+        let msgIndex = 0;
+        const msgInterval = setInterval(() => {
+            msgIndex = (msgIndex + 1) % messages.length;
+            overlayStatus.textContent = messages[msgIndex];
+        }, 800);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body:   formData,
+            });
+
+            clearInterval(msgInterval);
+            UploadOverlay.classList.remove('show');
+
+            if (response.ok) {
+                const results = await response.json();
+                handleResults(results);
+            } else {
+                const err = await response.json();
+                showDashToast('Upload Failed', err.error || 'Unknown error', true);
+            }
+
+        } catch (error) {
+            clearInterval(msgInterval);
+            UploadOverlay.classList.remove('show');
+            showDashToast('Connection Error', 'Could not reach the server.', true);
+        }
+    }
+
+    function handleResults(data) {
+    showResultsModal(data);
+}
+
+function showResultsModal(data) {
+    document.getElementById('results-filename').textContent = data.filename;
+
+    // Build hashes section
+    const hashesDiv = document.getElementById('results-hashes');
+    hashesDiv.innerHTML = '';
+    if (data.hashes) {
+        ['md5', 'sha1', 'sha256'].forEach(function(algo) {
+            if (data.hashes[algo]) {
+                const row = document.createElement('div');
+                row.className = 'results-meta-row';
+                row.innerHTML =
+                    '<span class="results-meta-key">' + algo.toUpperCase() + '</span>' +
+                    '<span class="results-meta-val">' + data.hashes[algo] + '</span>';
+                hashesDiv.appendChild(row);
             }
         });
+    }
 
-        // ── DRAG AND DROP ─────────────────────────────────────────────
-        // Highlight the drop zone when a file is dragged over it
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();  // Prevents browser from opening the file
-            dropZone.classList.add('dragover');
+    // Build metadata section
+    const metaDiv = document.getElementById('results-metadata');
+    metaDiv.innerHTML = '';
+    const metaKeys = data.metadata ? Object.keys(data.metadata) : [];
+    if (metaKeys.length === 0) {
+        metaDiv.innerHTML = '<div class="results-empty">No metadata extracted from this file.</div>';
+    } else {
+        metaKeys.forEach(function(key) {
+            const row = document.createElement('div');
+            row.className = 'results-meta-row';
+            row.innerHTML =
+                '<span class="results-meta-key">' + key + '</span>' +
+                '<span class="results-meta-val">' + data.metadata[key] + '</span>';
+            metaDiv.appendChild(row);
         });
+    }
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
+    // Build indicators section
+    const indDiv = document.getElementById('results-indicators');
+    indDiv.innerHTML = '';
+    if (!data.indicators || data.indicators.length === 0) {
+        indDiv.innerHTML = '<div class="results-empty">No indicators found.</div>';
+    } else {
+        data.indicators.forEach(function(ind) {
+            const item = document.createElement('div');
+            item.className = 'results-ind-item ' + ind.severity;
+            item.innerHTML =
+                '<strong>' + ind.severity + '</strong> &mdash; ' + ind.description;
+            indDiv.appendChild(item);
         });
+    }
 
-        // Handle the actual file drop
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                uploadFile(file);
-            }
+    document.getElementById('results-modal').classList.add('show');
+}
+
+function closeResultsModal() {
+    document.getElementById('results-modal').classList.remove('show');
+    location.reload();
+}
+
+// function closeResultsModalAndReload() {
+//     document.getElementById('results-modal').classList.remove('show');
+//     location.reload();
+// }
+    function updateIndicatorPanel(indicators, filename) {
+        if (!indicators || indicators.length === 0) return;
+
+        const panel = document.getElementById('indicator-panel');
+        panel.innerHTML = '';
+
+        indicators.forEach(ind => {
+            const div = document.createElement('div');
+            div.className = 'ind-item ' + ind.severity;
+            div.innerHTML =
+                '<div>' +
+                    '<div class="ind-desc">' + ind.description + '</div>' +
+                    '<div class="ind-file">' + filename + '</div>' +
+                '</div>';
+            panel.appendChild(div);
         });
+    }
 
-        // ── UPLOAD FUNCTION ───────────────────────────────────────────
-        async function uploadFile(file) {
+    function updateTimelinePanel(timeline) {
+        if (!timeline || timeline.length === 0) return;
 
-            // Show the scanning overlay
-            overlay.classList.add('show');
-            overlayStatus.textContent = 'Hashing evidence file…';
+        const panel = document.getElementById('timeline-panel');
+        panel.innerHTML = '';
 
-            // Cycle status messages while the server works
-            const messages = [
-                'Calculating SHA256 hash…',
-                'Extracting metadata…',
-                'Running forensic checks…',
-                'Building timeline…',
-                'Saving to database…',
-            ];
-            let msgIndex = 0;
-            const msgInterval = setInterval(() => {
-                msgIndex = (msgIndex + 1) % messages.length;
-                overlayStatus.textContent = messages[msgIndex];
-            }, 800);
-
-            // Build the form data payload
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                // POST the file to Flask's /upload route
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body:   formData,
-                });
-
-                clearInterval(msgInterval);
-                overlay.classList.remove('show');
-
-                if (response.ok) {
-                    const results = await response.json();
-                    handleResults(results);
-                } else {
-                    const err = await response.json();
-                    showToast('Upload Failed', err.error || 'Unknown error', true);
-                }
-
-            } catch (error) {
-                clearInterval(msgInterval);
-                overlay.classList.remove('show');
-                showToast('Connection Error', 'Could not reach the server.', true);
-            }
-        }
-
-        // ── HANDLE RESULTS ────────────────────────────────────────────
-        function handleResults(data) {
-
-            // Count HIGH indicators
-            const highCount = data.indicators
-                ? data.indicators.filter(i => i.severity === 'HIGH').length
-                : 0;
-
-            // Show result toast
-            showToast(
-                `✓  ${data.filename}`,
-                `${Object.keys(data.metadata || {}).length} metadata fields · ${highCount} HIGH indicators`
-            );
-
-            // Update panels with fresh data
-            updateIndicatorPanel(data.indicators, data.filename);
-            updateTimelinePanel(data.timeline);
-
-            // Reload after 2 seconds so the file list refreshes
-            setTimeout(() => location.reload(), 2000);
-        }
-
-        // ── UPDATE INDICATOR PANEL ────────────────────────────────────
-        function updateIndicatorPanel(indicators, filename) {
-            if (!indicators || indicators.length === 0) return;
-
-            const panel = document.getElementById('indicator-panel');
-            panel.innerHTML = '';
-
-            indicators.forEach(ind => {
-                const div = document.createElement('div');
-                div.className = `ind-item ${ind.severity}`;
-                div.innerHTML = `
-                    <div>
-                        <div class="ind-desc">${ind.description}</div>
-                        <div class="ind-file">${filename}</div>
-                    </div>
-                `;
-                panel.appendChild(div);
-            });
-        }
-
-        // ── UPDATE TIMELINE PANEL ─────────────────────────────────────
-        function updateTimelinePanel(timeline) {
-            if (!timeline || timeline.length === 0) return;
-
-            const panel = document.getElementById('timeline-panel');
-            panel.innerHTML = '';
-
-            timeline.forEach((event, index) => {
-                const isLast = index === timeline.length - 1;
-                const div    = document.createElement('div');
-                div.className = 'tl-item';
-                div.innerHTML = `
-                    <div class="tl-left">
-                        <div class="tl-dot"></div>
-                        ${!isLast ? '<div class="tl-line"></div>' : ''}
-                    </div>
-                    <div>
-                        <div class="tl-event">${event.event}</div>
-                        <div class="tl-date">${event.date} &nbsp; ${event.time}</div>
-                        <div class="tl-file">${event.file}</div>
-                    </div>
-                `;
-                panel.appendChild(div);
-            });
-        }
-
-        // ── TOAST NOTIFICATION ────────────────────────────────────────
-        function showToast(title, body, isError = false) {
-            toastTitle.textContent  = title;
-            toastTitle.style.color  = isError ? 'var(--alert)' : 'var(--ok)';
-            toastBody.textContent   = body;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 4000);
-        }
-
-        // ── NAV ACTIVE STATE ──────────────────────────────────────────
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.nav-item')
-                    .forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-            });
+        timeline.forEach((event, index) => {
+            const isLast = index === timeline.length - 1;
+            const div    = document.createElement('div');
+            div.className = 'tl-item';
+            div.innerHTML =
+                '<div class="tl-left">' +
+                    '<div class="tl-dot"></div>' +
+                    (!isLast ? '<div class="tl-line"></div>' : '') +
+                '</div>' +
+                '<div>' +
+                    '<div class="tl-event">' + event.event + '</div>' +
+                    '<div class="tl-date">'  + event.date + ' ' + event.time + '</div>' +
+                    '<div class="tl-file">'  + event.file + '</div>' +
+                '</div>';
+            panel.appendChild(div);
         });
-    </script>
+    }
 
-</body>
-</html>
+    function showDashToast(title, body, isError) {
+        toastTitle.textContent = title;
+        toastTitle.style.color = isError ? 'var(--alert)' : 'var(--ok)';
+        toastBody.textContent  = body;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+</script>
+
 {% endblock %}

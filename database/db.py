@@ -250,6 +250,20 @@ def search_metadata(query):
     conn.close()
     return rows
 
+def get_gps_findings():
+    """Returns all files that have GPS coordinates embedded."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT f.filename, f.id, m.value as gps
+        FROM files f
+        JOIN metadata m ON f.id = m.file_id
+        WHERE m.key = 'GPS Coordinates'
+        ORDER BY f.upload_time DESC
+    ''')
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 def get_correlations():
     """
