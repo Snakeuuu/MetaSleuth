@@ -479,6 +479,22 @@ def get_gps_findings():
     conn.close()
     return [dict(r) for r in rows]
 
+def get_file_audit_log(filename):
+    """
+    Returns audit log entries related to a specific file only.
+    Filters by filename so each PDF report shows only the
+    chain of custody for that specific piece of evidence.
+    """
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM audit_log
+        WHERE detail LIKE ?
+        ORDER BY timestamp ASC
+    ''', (f'%{filename}%',))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 def get_correlations():
     """

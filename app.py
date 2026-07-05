@@ -14,7 +14,8 @@ from database.db import (create_tables, log_action, save_file_record,
                           get_audit_log, get_dashboard_stats,
                           search_metadata, get_correlations,
                           get_connection, get_gps_findings,
-                          save_verification, get_verifications)
+                          save_verification, get_verifications,
+                          get_file_audit_log)
 
 from analyzers.image  import analyze_image
 from analyzers.pdf    import analyze_pdf
@@ -318,12 +319,11 @@ def export_report(file_id):
     file_record    = dict(file_row)
     metadata_rows  = get_file_metadata(file_id)
     indicator_rows = get_file_indicators(file_id)
-    audit_rows     = get_audit_log(file_id=file_id)  # scoped to THIS file only
+    audit = get_file_audit_log(file_record['filename'])
 
     metadata   = {row['key']: row['value'] for row in metadata_rows}
     indicators = [{'severity': row['severity'],
                    'description': row['description']} for row in indicator_rows]
-    audit      = [dict(row) for row in audit_rows]
 
     timeline = build_timeline(metadata, file_record['filename'])
 
