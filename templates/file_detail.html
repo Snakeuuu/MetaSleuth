@@ -142,6 +142,43 @@
             box-shadow: 0 0 36px rgba(0, 212, 255, 0.5);
         }
 
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border-bright);
+            border-radius: 10px;
+            color: var(--cyan);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--sans);
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            background: rgba(0, 212, 255, 0.08);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+        }
+
+        .btn-outline:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-outline.secondary {
+            border-color: var(--border);
+            color: var(--muted);
+        }
+
+        .btn-outline.secondary:hover {
+            border-color: var(--border-bright);
+            color: var(--violet);
+            background: rgba(123, 47, 255, 0.08);
+        }
+
         /* ── PAGE CONTENT ── */
         .page {
             position: relative;
@@ -278,12 +315,26 @@
         }
         .verify-box {
             display: none;
-            margin: 16px 0;
+            margin: 16px 32px 0;
             padding: 16px 20px;
             border-radius: 10px;
             font-family: var(--mono);
             font-size: 12px;
             line-height: 1.8;
+        }
+
+        .verify-box.show { display: block; }
+
+        .verify-box.ok {
+            background: rgba(0, 255, 157, 0.06);
+            border: 1px solid rgba(0, 255, 157, 0.25);
+            color: var(--ok);
+        }
+
+        .verify-box.alert {
+            background: rgba(255, 51, 102, 0.08);
+            border: 1px solid rgba(255, 51, 102, 0.3);
+            color: var(--alert);
         }
 
         /* ── INDICATOR ITEMS ── */
@@ -414,9 +465,24 @@
         </div>
         <div class="topbar-right">
             <button
+                class="btn-outline secondary"
+                onclick="document.getElementById('compare-input').click()"
+                id="compare-btn"
+                title="Check a copy of this file from elsewhere against the stored hash"
+            >
+                &#129514; Compare External Copy
+            </button>
+            <input
+                type="file"
+                id="compare-input"
+                style="display:none"
+                onchange="compareExternalFile({{ file_id }})"
+            />
+            <button
                 class="btn-outline"
                 onclick="verifyIntegrity({{ file_id }})"
                 id="verify-btn"
+                title="Re-check the stored evidence file against its original hash"
             >
                 &#128274; Verify Integrity
             </button>
@@ -424,27 +490,8 @@
                 &#128196; Export PDF Report
             </a>
         </div>
-        <div id="verify-result" style="display:none;margin:16px 32px 0;padding:16px 20px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.8;"></div>
-    </div>
-
-    <!-- ── PAGE ── -->
-    <div class="page">
-
-        <!-- File header -->
-        <div class="file-header">
-    line-height: 1.8;
-">
-</div>
-    </div>
-
-    <!-- ── PAGE ── -->
-    <div class="page">
-
-        <!-- File header -->
-        <div class="file-header">
-    line-height: 1.8;
-">
-</div>
+        <div id="verify-result" class="verify-box"></div>
+        <div id="compare-result" class="verify-box"></div>
     </div>
 
     <!-- ── PAGE ── -->
@@ -510,6 +557,7 @@
                     {% endif %}
                 </div>
             </div>
+
 
             <!-- Right column: indicators + hashes -->
             <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -582,63 +630,178 @@
 
         </div><!-- /two-col -->
 
+        <!-- External comparison log (per-file, never combined) -->
+        <div class="panel">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="dot v"></span>
+                    Comparison Log — File #{{ file_id }}
+                </div>
+            </div>
+            <div class="panel-body">
+                <table id="comparison-table" style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="text-align:left; border-bottom: 1px solid var(--border);">
+                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">TIMESTAMP</th>
+                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">COMPARED FILE</th>
+                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">RESULT</th>
+                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">SHA256</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-tbody">
+                        {% if comparisons %}
+                            {% for c in comparisons %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                                <td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--muted);">{{ c['timestamp'][:19] }}</td>
+                                <td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text);">{{ c['compared_filename'] }}</td>
+                                <td style="padding:8px; font-size:11px; font-family:var(--mono);">
+                                    {% if c['match'] %}
+                                        <span style="color:var(--ok);">&#10003; MATCH</span>
+                                    {% else %}
+                                        <span style="color:var(--alert);">&#9888; MISMATCH</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text); word-break:break-all;">{{ c['compared_sha256'] }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+                <div id="comparison-empty" class="empty" {% if comparisons %}style="display:none;"{% endif %}>
+                    <div class="empty-icon">🧪</div>
+                    No external comparisons yet for this file. Use "Compare External Copy" above to log one.
+                </div>
+            </div>
+        </div>
+
     </div><!-- /page -->
     <script>
+        function showBox(el, state, html) {
+            el.classList.remove('ok', 'alert');
+            el.classList.add('show', state);
+            el.innerHTML = html;
+        }
+
         async function verifyIntegrity(fileId) {
             const btn    = document.getElementById('verify-btn');
             const result = document.getElementById('verify-result');
-        
+
             btn.textContent = 'Verifying...';
             btn.disabled    = true;
-        
+
             try {
                 const response = await fetch('/verify/' + fileId, {
                     method: 'POST'
                 });
-        
+
                 const data = await response.json();
-                btn.textContent = '&#128274; Verify Integrity';
-                btn.disabled    = false;
-        
-                if (data.error && !data.verified) {
-                    result.style.display      = 'block';
-                    result.style.background   = 'rgba(255,51,102,0.08)';
-                    result.style.border       = '1px solid rgba(255,51,102,0.3)';
-                    result.style.color        = 'var(--alert)';
-                    result.innerHTML          = '&#9888; ' + data.error;
+
+                if (!response.ok || (data.error && !data.verified)) {
+                    showBox(result, 'alert', '&#9888; ' + (data.error || 'Verification failed.'));
                     return;
                 }
-        
+
                 if (data.verified) {
-                    result.style.display    = 'block';
-                    result.style.background = 'rgba(0,255,157,0.06)';
-                    result.style.border     = '1px solid rgba(0,255,157,0.25)';
-                    result.style.color      = 'var(--ok)';
-                    result.innerHTML =
+                    showBox(result, 'ok',
                         '&#10003; INTEGRITY VERIFIED — File has not been modified since upload.<br><br>' +
                         'Original SHA256:&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
                         'Current SHA256:&nbsp;&nbsp;&nbsp;' + data.current_sha256 + '<br><br>' +
-                        'Both values match. Chain of custody is intact.';
+                        'Both values match. Chain of custody is intact.'
+                    );
                 } else {
-                    result.style.display    = 'block';
-                    result.style.background = 'rgba(255,51,102,0.08)';
-                    result.style.border     = '1px solid rgba(255,51,102,0.3)';
-                    result.style.color      = 'var(--alert)';
-                    result.innerHTML =
+                    showBox(result, 'alert',
                         '&#9888; INTEGRITY FAILURE — File has been modified since upload.<br><br>' +
                         'Original SHA256:&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
                         'Current SHA256:&nbsp;&nbsp;&nbsp;' + data.current_sha256 + '<br><br>' +
                         'These values do not match. The file has changed. ' +
-                        'Do not use as evidence without further investigation.';
+                        'Do not use as evidence without further investigation.'
+                    );
                 }
-        
+
             } catch (err) {
-                btn.textContent = '&#128274; Verify Integrity';
+                showBox(result, 'alert', '&#9888; Connection error — could not reach server.');
+            } finally {
+                btn.textContent = '\u{1F512} Verify Integrity';
                 btn.disabled    = false;
-                result.style.display  = 'block';
-                result.style.color    = 'var(--alert)';
-                result.innerHTML      = 'Connection error — could not reach server.';
             }
+        }
+
+        async function compareExternalFile(fileId) {
+            const input  = document.getElementById('compare-input');
+            const btn    = document.getElementById('compare-btn');
+            const result = document.getElementById('compare-result');
+
+            const file = input.files[0];
+            if (!file) return;
+
+            const originalLabel = btn.innerHTML;
+            btn.textContent = 'Comparing...';
+            btn.disabled    = true;
+
+            const formData = new FormData();
+            formData.append('compare_file', file);
+
+            try {
+                const response = await fetch('/verify-external/' + fileId, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    showBox(result, 'alert', '&#9888; ' + (data.error || 'Comparison failed.'));
+                    return;
+                }
+
+                if (data.verified) {
+                    showBox(result, 'ok',
+                        '&#10003; MATCH — "' + data.compared_filename + '" is identical to the stored evidence file.<br><br>' +
+                        'Stored SHA256:&nbsp;&nbsp;&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
+                        'Compared SHA256:&nbsp;' + data.current_sha256 + '<br><br>' +
+                        'This external copy has not been altered relative to the file on record.'
+                    );
+                } else {
+                    showBox(result, 'alert',
+                        '&#9888; MISMATCH — "' + data.compared_filename + '" is NOT identical to the stored evidence file.<br><br>' +
+                        'Stored SHA256:&nbsp;&nbsp;&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
+                        'Compared SHA256:&nbsp;' + data.current_sha256 + '<br><br>' +
+                        'These are different files, or this copy has been modified.'
+                    );
+                }
+
+                addComparisonRow(data);
+
+            } catch (err) {
+                showBox(result, 'alert', '&#9888; Connection error — could not reach server.');
+            } finally {
+                btn.innerHTML   = originalLabel;
+                btn.disabled    = false;
+                input.value     = ''; // reset so the same file can be re-picked
+            }
+        }
+
+        function addComparisonRow(data) {
+            const tbody = document.getElementById('comparison-tbody');
+            const empty = document.getElementById('comparison-empty');
+            if (empty) empty.style.display = 'none';
+
+            const row = document.createElement('tr');
+            row.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+
+            const resultHtml = data.verified
+                ? '<span style="color:var(--ok);">&#10003; MATCH</span>'
+                : '<span style="color:var(--alert);">&#9888; MISMATCH</span>';
+
+            const timestamp = (data.timestamp || new Date().toISOString()).slice(0, 19);
+
+            row.innerHTML =
+                '<td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--muted);">' + timestamp + '</td>' +
+                '<td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text);">' + data.compared_filename + '</td>' +
+                '<td style="padding:8px; font-size:11px; font-family:var(--mono);">' + resultHtml + '</td>' +
+                '<td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text); word-break:break-all;">' + data.current_sha256 + '</td>';
+
+            tbody.insertBefore(row, tbody.firstChild);
         }
         </script>
 

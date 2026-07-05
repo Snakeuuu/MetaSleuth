@@ -77,6 +77,23 @@ def create_tables():
         )
     ''')
 
+    # TABLE 5: External comparison log — one row per "Compare External
+    # Copy" check. Tied to file_id so each evidence file has its own
+    # independent history; comparisons are never mixed between files.
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS comparisons (
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id            INTEGER NOT NULL,
+            compared_filename  TEXT NOT NULL,
+            compared_md5       TEXT,
+            compared_sha256    TEXT,
+            match              INTEGER NOT NULL,
+            timestamp          TEXT NOT NULL,
+            analyst            TEXT,
+            FOREIGN KEY (file_id) REFERENCES files(id)
+        )
+    ''')
+
     conn.commit()  # "commit" means save everything permanently
     conn.close()   # always close the connection when done
 
@@ -193,6 +210,51 @@ def get_file_indicators(file_id):
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+def save_comparison(file_id, compared_filename, compared_md5, compared_sha256, match, analyst):
+    """
+    Records one "Compare External Copy" check against a specific file.
+    Each row is permanently tied to file_id, so File #3's comparison
+    history never shows up on File #7's page, and vice versa.
+    """
+    from datetime import datetime
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO comparisons
+            (file_id, compared_filename, compared_md5, compared_sha256, match, timestamp, analyst)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        file_id,
+        compared_filename,
+        compared_md5,
+        compared_sha256,
+        1 if match else 0,
+        datetime.now().isoformat(),
+        analyst
+    ))
+    comparison_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return comparison_id
+
+
+def get_comparisons(file_id):
+    """
+    Returns the full comparison history for ONE file only,
+    newest first. Used on the file detail page and in the
+    exported PDF report — always scoped to a single file_id.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM comparisons
+        WHERE file_id = ?
+        ORDER BY timestamp DESC
+    ''', (file_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 def get_audit_log():
