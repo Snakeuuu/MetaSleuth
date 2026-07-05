@@ -821,72 +821,7 @@ def build_comparison_section(story, styles, comparisons):
     ]))
     story.append(comp_table)
 
-    def build_comparison_section(story, styles, comparisons):
-    """
-    Section 7 — External Copy Comparison Log.
-
-    Every time an analyst used "Compare External Copy" on THIS file,
-    it created one row here. This section is scoped to a single file —
-    comparisons made against other evidence files never appear here.
-
-    This documents every attempt to check this evidence against
-    outside copies, which strengthens (or challenges) the integrity
-    story told elsewhere in this report.
-    """
-    story.append(Paragraph('7.  External Copy Comparison Log', styles['section_head']))
-    story.append(HRFlowable(width='100%', thickness=0.5, color=CYAN, spaceAfter=8))
-    story.append(Paragraph(
-        'The following is a complete record of every time this specific '
-        'evidence file was compared against an externally supplied copy '
-        '(e.g. a file found on another device, drive, or attachment). '
-        'Each comparison re-hashes the external file and checks it '
-        'against the SHA256 recorded for this evidence item at upload.',
-        styles['body']
-    ))
-    story.append(Spacer(1, 6))
-
-    if not comparisons:
-        story.append(Paragraph(
-            'No external comparisons have been performed for this file.',
-            styles['body']
-        ))
-        return
-
-    comp_rows = [
-        [
-            Paragraph('<b>Timestamp</b>',        styles['body']),
-            Paragraph('<b>Compared File</b>',     styles['body']),
-            Paragraph('<b>Result</b>',            styles['body']),
-            Paragraph('<b>Compared SHA256</b>',   styles['body']),
-        ]
-    ]
-
-    for entry in comparisons:
-        result_text = 'MATCH' if entry.get('match') else 'MISMATCH'
-        result_hex  = '#' + OK.hexval()[2:] if entry.get('match') else '#' + ALERT.hexval()[2:]
-        comp_rows.append([
-            Paragraph(str(entry.get('timestamp', ''))[:19],       styles['mono']),
-            Paragraph(str(entry.get('compared_filename', '')),    styles['body']),
-            Paragraph(f'<font color="{result_hex}"><b>{result_text}</b></font>', styles['body']),
-            Paragraph(str(entry.get('compared_sha256', ''))[:24] + '…', styles['mono']),
-        ])
-
-    comp_table = Table(comp_rows, colWidths=[32*mm, 45*mm, 23*mm, 70*mm])
-    comp_table.setStyle(TableStyle([
-        ('BACKGROUND',   (0,0), (-1,0),  VOID),
-        ('TEXTCOLOR',    (0,0), (-1,0),  WHITE),
-        ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
-        ('FONTSIZE',     (0,0), (-1,0),  8),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [WHITE, LIGHT_BG]),
-        ('FONTSIZE',     (0,1), (-1,-1),  7),
-        ('TOPPADDING',   (0,0), (-1,-1),  4),
-        ('BOTTOMPADDING',(0,0), (-1,-1),  4),
-        ('LEFTPADDING',  (0,0), (-1,-1),  6),
-        ('GRID',         (0,0), (-1,-1),  0.3, colors.HexColor('#e2e8f0')),
-        ('VALIGN',       (0,0), (-1,-1),  'TOP'),
-    ]))
-    story.append(comp_table)
-
+    
 
 def generate_report(output_path, file_record, metadata,
                     indicators, timeline, audit_entries,

@@ -93,6 +93,48 @@ def create_tables():
             FOREIGN KEY (file_id) REFERENCES files(id)
         )
     ''')
+    def save_verification(file_id, compared_filename, original_sha256,
+                       submitted_sha256, match, analyst):
+        """
+        Saves a permanent record of every verification attempt —
+        who verified, what file they used, when, and whether it passed.
+        """
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO verifications
+            (file_id, verified_at, compared_filename,
+             original_sha256, submitted_sha256, result, analyst)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            file_id,
+            datetime.now().isoformat(),
+            compared_filename,
+            original_sha256,
+            submitted_sha256,
+            'PASSED' if match else 'FAILED',
+            analyst
+        ))
+    create_verifications_table(cursor)
+    conn.commit()
+    conn.close()
+
+
+def get_verifications(file_id):
+    """
+    Returns all verification attempts for a specific file,
+    newest first.
+    """
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM verifications
+        WHERE file_id = ?
+        ORDER BY verified_at DESC
+    ''', (file_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
     conn.commit()  # "commit" means save everything permanently
     conn.close()   # always close the connection when done
@@ -292,6 +334,21 @@ def get_dashboard_stats():
     conn.close()
     return stats
 
+
+def create_verifications_table(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS verifications (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id           INTEGER NOT NULL,
+            verified_at       TEXT NOT NULL,
+            compared_filename TEXT NOT NULL,
+            original_sha256   TEXT NOT NULL,
+            submitted_sha256  TEXT NOT NULL,
+            result            TEXT NOT NULL,
+            analyst           TEXT,
+            FOREIGN KEY (file_id) REFERENCES files(id)
+        )
+    ''')
 
 def search_metadata(query):
     """

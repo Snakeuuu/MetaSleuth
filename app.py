@@ -14,7 +14,7 @@ from database.db import (create_tables, log_action, save_file_record,
                           get_audit_log, get_dashboard_stats,
                           search_metadata, get_correlations,
                           get_connection, get_gps_findings,
-                          save_comparison, get_comparisons)
+                          save_verification, get_verifications)
 
 from analyzers.image  import analyze_image
 from analyzers.pdf    import analyze_pdf
@@ -216,19 +216,15 @@ def upload_file():
 
 @app.route('/file/<int:file_id>')
 def file_detail(file_id):
-    """
-    Shows detailed results for one specific file.
-    """
-    metadata    = get_file_metadata(file_id)
-    indicators  = get_file_indicators(file_id)
-    comparisons = get_comparisons(file_id)
+    metadata      = get_file_metadata(file_id)
+    indicators    = get_file_indicators(file_id)
+    verifications = get_verifications(file_id)
 
     return render_template('file_detail.html',
-                           file_id     = file_id,
-                           metadata    = metadata,
-                           indicators  = indicators,
-                           comparisons = comparisons)
-
+                           file_id       = file_id,
+                           metadata      = metadata,
+                           indicators    = indicators,
+                           verifications = verifications)
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
 def delete_file(file_id):
@@ -288,7 +284,7 @@ def export_report(file_id):
     metadata_rows  = get_file_metadata(file_id)
     indicator_rows = get_file_indicators(file_id)
     audit_rows     = get_audit_log()
-    comparisons    = get_comparisons(file_id)
+    
 
     metadata   = {row['key']: row['value'] for row in metadata_rows}
     indicators = [{'severity': row['severity'],
@@ -307,7 +303,7 @@ def export_report(file_id):
         indicators    = indicators,
         timeline      = timeline,
         audit_entries = audit,
-        comparisons   = comparisons,
+        
         case_id       = 'CASE-001'
     )
 
@@ -473,13 +469,6 @@ def api_correlations():
 
 @app.route('/verify/<int:file_id>', methods=['POST'])
 def verify_file(file_id):
-    """
-    Re-hashes the file currently in the uploads folder
-    and compares it against the hash stored at time of upload.
-    
-    If they match — file is intact, chain of custody holds.
-    If they differ — file was modified after upload, serious finding.
-    """
     conn   = get_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM files WHERE id = ?', (file_id,))
@@ -494,131 +483,89 @@ def verify_file(file_id):
 
     if not os.path.exists(filepath):
         return jsonify({
-            'verified':  False,
-            'error':     'Physical file not found in uploads folder. '
-                         'It may have been moved or deleted outside MetaSleuth.'
+            'verified': False,
+            'error':    'Physical file not found in uploads folder.'
         }), 404
-    
-@app.route('/verify-external/<int:file_id>', methods=['POST'])
-def verify_external_file(file_id):
-    """
-    Compares an externally supplied copy of a file (e.g. a copy the
-    analyst found on another machine, USB drive, email attachment, etc.)
-    against the hash recorded for this evidence item at time of upload.
 
-    Unlike /verify/<file_id> — which re-hashes the file already sitting
-    in our own uploads folder — this route lets you check a copy that
-    lives OUTSIDE MetaSleuth. That copy is hashed from a temporary file
-    and then deleted immediately. It is never written into the uploads
-    folder permanently and never touches the evidence record, so this
-    check cannot contaminate the chain of custody.
-    """
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM files WHERE id = ?', (file_id,))
-        file_row = cursor.fetchone()
-    except Exception as e:
-        return jsonify({'error': f'Database error: {str(e)}'}), 500
-    finally:
-        conn.close()
-
-    if not file_row:
-        return jsonify({'error': 'File not found in database'}), 404
-
-    if 'compare_file' not in request.files:
-        return jsonify({'error': 'No comparison file was received.'}), 400
-
-    upload = request.files['compare_file']
-
-    if upload.filename == '':
-        return jsonify({'error': 'No comparison file was selected.'}), 400
-
-    tmp_path = None
-    try:
-        # Save to a throwaway temp path just long enough to hash it —
-        # this file is never analyzed, listed, or kept afterwards.
-        safe_name = secure_filename(upload.filename) or 'comparison_file'
-        tmp_path = os.path.join(
-            UPLOAD_FOLDER,
-            f'.tmp_compare_{file_id}_{safe_name}'
-        )
-        upload.save(tmp_path)
-
-        current_hashes = calculate_hashes(tmp_path)
-
-    except Exception as e:
-        return jsonify({'error': f'Could not read comparison file: {str(e)}'}), 500
-
-    finally:
-        # Always clean up the temp file, even if hashing failed
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.remove(tmp_path)
-            except OSError:
-                pass
-
-    original_sha256 = file_row['sha256']
-    current_sha256  = current_hashes.get('sha256', '')
-    match = bool(current_sha256) and original_sha256 == current_sha256
-
-    # Record this comparison permanently against THIS file only —
-    # it will never appear on another file's comparison log.
-    try:
-        save_comparison(
-            file_id,
-            upload.filename,
-            current_hashes.get('md5', ''),
-            current_sha256,
-            match,
-            ANALYST_NAME
-        )
-    except Exception:
-        pass  # a logging failure shouldn't block the result being returned
-
-    log_action(
-        'VERIFY_EXTERNAL',
-        f'External comparison for {file_row["filename"]} against '
-        f'"{upload.filename}" — {"MATCH" if match else "MISMATCH"}',
-        ANALYST_NAME,
-        TOOL_VERSION
-    )
-
-    return jsonify({
-        'verified':          match,
-        'filename':          file_row['filename'],
-        'compared_filename': upload.filename,
-        'original_sha256':   original_sha256,
-        'current_sha256':    current_sha256,
-        'original_md5':      file_row['md5'],
-        'current_md5':       current_hashes.get('md5', ''),
-        'timestamp':         datetime.now().isoformat(),
-    })
-
-    # Recalculate hashes right now
-    current_hashes = calculate_hashes(filepath)
-
-    # Compare against what was stored on upload
+    current_hashes  = calculate_hashes(filepath)
     original_sha256 = file_row['sha256']
     current_sha256  = current_hashes['sha256']
-
-    match = original_sha256 == current_sha256
+    match           = original_sha256 == current_sha256
 
     log_action(
         'VERIFY',
         f'Integrity check for {filename} — '
-        f'{"PASSED" if match else "FAILED — hash mismatch detected"}',
+        f'{"PASSED" if match else "FAILED — hash mismatch"}',
         ANALYST_NAME,
         TOOL_VERSION
     )
 
     return jsonify({
-        'verified':       match,
-        'filename':       filename,
+        'verified':        match,
+        'filename':        filename,
         'original_sha256': original_sha256,
         'current_sha256':  current_sha256,
         'original_md5':    file_row['md5'],
         'current_md5':     current_hashes['md5'],
+    })
+
+
+@app.route('/reverify/<int:file_id>', methods=['POST'])
+def reverify_file(file_id):
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM files WHERE id = ?', (file_id,))
+    file_row = cursor.fetchone()
+    conn.close()
+
+    if not file_row:
+        return jsonify({'error': 'Original file record not found'}), 404
+
+    temp_filename = f'reverify_{file_id}_{secure_filename(file.filename)}'
+    temp_path     = os.path.join(UPLOAD_FOLDER, temp_filename)
+    file.save(temp_path)
+
+    new_hashes = calculate_hashes(temp_path)
+    os.remove(temp_path)
+
+    original_sha256 = file_row['sha256']
+    new_sha256      = new_hashes['sha256']
+    match           = original_sha256 == new_sha256
+
+    # Save permanently to database
+    save_verification(
+        file_id          = file_id,
+        compared_filename= file.filename,
+        original_sha256  = original_sha256,
+        submitted_sha256 = new_sha256,
+        match            = match,
+        analyst          = ANALYST_NAME
+    )
+
+    log_action(
+        'REVERIFY',
+        f'Re-verification for {file_row["filename"]} against '
+        f'"{file.filename}" — {"PASSED" if match else "FAILED"}',
+        ANALYST_NAME,
+        TOOL_VERSION
+    )
+
+    return jsonify({
+        'verified':        match,
+        'filename':        file_row['filename'],
+        'compared_to':     file.filename,
+        'original_sha256': original_sha256,
+        'new_sha256':      new_sha256,
+        'original_md5':    file_row['md5'],
+        'new_md5':         new_hashes['md5'],
     })
 
 # ---------------------------------------------------------------

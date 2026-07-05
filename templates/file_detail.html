@@ -37,7 +37,6 @@
             min-height: 100vh;
         }
 
-        /* Grid background */
         body::before {
             content: '';
             position: fixed;
@@ -50,7 +49,6 @@
             z-index: 0;
         }
 
-        /* Glow orbs */
         .orb {
             position: fixed;
             border-radius: 50%;
@@ -58,10 +56,24 @@
             pointer-events: none;
             z-index: 0;
         }
-        .orb-a { width: 500px; height: 500px; background: rgba(123,47,255,0.15); top: -100px; right: -100px; }
-        .orb-b { width: 400px; height: 400px; background: rgba(0,212,255,0.10); bottom: 100px; left: -80px; }
 
-        /* ── TOPBAR ── */
+        .orb-a {
+            width: 500px;
+            height: 500px;
+            background: rgba(123, 47, 255, 0.15);
+            top: -100px;
+            right: -100px;
+        }
+
+        .orb-b {
+            width: 400px;
+            height: 400px;
+            background: rgba(0, 212, 255, 0.10);
+            bottom: 100px;
+            left: -80px;
+        }
+
+        /* Topbar */
         .topbar {
             position: sticky;
             top: 0;
@@ -73,8 +85,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: relative;
-            z-index: 10;
         }
 
         .topbar-left {
@@ -145,41 +155,24 @@
         .btn-outline {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 9px 20px;
-            background: var(--surface);
+            gap: 6px;
+            padding: 7px 16px;
             border: 1px solid var(--border-bright);
-            border-radius: 10px;
+            border-radius: 8px;
+            background: transparent;
             color: var(--cyan);
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 12px;
+            font-family: var(--mono);
             cursor: pointer;
-            font-family: var(--sans);
             transition: all 0.2s;
+            text-decoration: none;
         }
 
         .btn-outline:hover {
             background: rgba(0, 212, 255, 0.08);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
         }
 
-        .btn-outline:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-outline.secondary {
-            border-color: var(--border);
-            color: var(--muted);
-        }
-
-        .btn-outline.secondary:hover {
-            border-color: var(--border-bright);
-            color: var(--violet);
-            background: rgba(123, 47, 255, 0.08);
-        }
-
-        /* ── PAGE CONTENT ── */
+        /* Page content */
         .page {
             position: relative;
             z-index: 1;
@@ -188,10 +181,10 @@
             padding: 32px 32px 60px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
         }
 
-        /* ── PANEL ── */
+        /* Panel */
         .panel {
             background: rgba(14, 14, 31, 0.85);
             border: 1px solid var(--border);
@@ -216,34 +209,26 @@
             gap: 8px;
         }
 
-        .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--cyan);
-            box-shadow: 0 0 8px var(--cyan);
-        }
-
-        .dot.v { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
-        .dot.a { background: var(--alert);  box-shadow: 0 0 8px var(--alert); }
-        .dot.o { background: var(--ok);     box-shadow: 0 0 8px var(--ok); }
-
         .panel-body {
             padding: 20px 24px;
         }
 
-        /* ── TWO COLUMN ── */
+        .dot   { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);   box-shadow: 0 0 8px var(--cyan); }
+        .dot.v { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+        .dot.a { background: var(--alert);  box-shadow: 0 0 8px var(--alert); }
+        .dot.o { background: var(--ok);     box-shadow: 0 0 8px var(--ok); }
+
+        /* Two column layout */
         .two-col {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
 
-        /* ── METADATA TABLE ── */
+        /* Metadata table */
         .meta-table {
             display: flex;
             flex-direction: column;
-            gap: 0;
         }
 
         .meta-row {
@@ -273,19 +258,11 @@
             font-size: 11px;
         }
 
-        .meta-val.warn {
-            color: var(--warn);
-        }
+        .meta-val.warn  { color: var(--warn); }
+        .meta-val.alert { color: var(--alert); }
+        .meta-val.ok    { color: var(--ok); }
 
-        .meta-val.alert {
-            color: var(--alert);
-        }
-
-        .meta-val.ok {
-            color: var(--ok);
-        }
-
-        /* ── HASH BLOCK ── */
+        /* Hash block */
         .hash-block {
             background: var(--void);
             border: 1px solid var(--border);
@@ -304,40 +281,10 @@
             font-family: var(--mono);
         }
 
-        .hash-algo {
-            color: var(--cyan);
-            font-weight: 600;
-        }
+        .hash-algo { color: var(--cyan); font-weight: 600; }
+        .hash-val  { color: var(--text); word-break: break-all; }
 
-        .hash-val {
-            color: var(--text);
-            word-break: break-all;
-        }
-        .verify-box {
-            display: none;
-            margin: 16px 32px 0;
-            padding: 16px 20px;
-            border-radius: 10px;
-            font-family: var(--mono);
-            font-size: 12px;
-            line-height: 1.8;
-        }
-
-        .verify-box.show { display: block; }
-
-        .verify-box.ok {
-            background: rgba(0, 255, 157, 0.06);
-            border: 1px solid rgba(0, 255, 157, 0.25);
-            color: var(--ok);
-        }
-
-        .verify-box.alert {
-            background: rgba(255, 51, 102, 0.08);
-            border: 1px solid rgba(255, 51, 102, 0.3);
-            color: var(--alert);
-        }
-
-        /* ── INDICATOR ITEMS ── */
+        /* Indicator items */
         .ind-list {
             display: flex;
             flex-direction: column;
@@ -350,50 +297,24 @@
             border-left: 3px solid;
         }
 
-        .ind-item.HIGH   { border-color: var(--alert);  background: rgba(255, 51,  102, 0.06); }
+        .ind-item.HIGH   { border-color: var(--alert);  background: rgba(255,  51, 102, 0.06); }
         .ind-item.MEDIUM { border-color: var(--warn);   background: rgba(255, 170,   0, 0.06); }
         .ind-item.LOW    { border-color: var(--ok);     background: rgba(0,   255, 157, 0.04); }
 
-        .ind-sev {
-            font-size: 10px;
-            font-family: var(--mono);
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            margin-bottom: 4px;
-        }
+        .ind-sev  { font-size: 10px; font-family: var(--mono); font-weight: 700; letter-spacing: 0.1em; margin-bottom: 4px; }
+        .ind-desc { font-size: 12px; color: var(--text); line-height: 1.5; }
 
         .ind-sev.HIGH   { color: var(--alert); }
         .ind-sev.MEDIUM { color: var(--warn); }
         .ind-sev.LOW    { color: var(--ok); }
 
-        .ind-desc {
-            font-size: 12px;
-            color: var(--text);
-            line-height: 1.5;
-        }
-
-        /* ── EMPTY STATE ── */
-        .empty {
-            text-align: center;
-            padding: 32px 20px;
-            color: var(--muted);
-            font-family: var(--mono);
-            font-size: 13px;
-        }
-
-        .empty-icon {
-            font-size: 28px;
-            margin-bottom: 10px;
-            opacity: 0.4;
-        }
-
-        /* ── FILE INFO HEADER ── */
+        /* File header */
         .file-header {
             display: flex;
             align-items: center;
             gap: 16px;
             padding: 24px;
-            background: linear-gradient(135deg, rgba(123,47,255,0.08), rgba(0,212,255,0.04));
+            background: linear-gradient(135deg, rgba(123, 47, 255, 0.08), rgba(0, 212, 255, 0.04));
             border: 1px solid var(--border);
             border-radius: 16px;
         }
@@ -426,13 +347,6 @@
             flex-wrap: wrap;
         }
 
-        .file-header-meta span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Severity badge in header */
         .sev-badge {
             margin-left: auto;
             padding: 6px 14px;
@@ -444,10 +358,40 @@
             flex-shrink: 0;
         }
 
-        .sev-badge.HIGH   { color: var(--alert); border-color: rgba(255,51,102,0.4);  background: rgba(255,51,102,0.1); }
-        .sev-badge.MEDIUM { color: var(--warn);  border-color: rgba(255,170,0,0.4);   background: rgba(255,170,0,0.1); }
-        .sev-badge.LOW    { color: var(--ok);    border-color: rgba(0,255,157,0.3);   background: rgba(0,255,157,0.07); }
-        .sev-badge.NONE   { color: var(--muted); border-color: var(--border);          background: transparent; }
+        .sev-badge.HIGH   { color: var(--alert);  border-color: rgba(255,  51, 102, 0.4); background: rgba(255,  51, 102, 0.1); }
+        .sev-badge.MEDIUM { color: var(--warn);   border-color: rgba(255, 170,   0, 0.4); background: rgba(255, 170,   0, 0.1); }
+        .sev-badge.LOW    { color: var(--ok);     border-color: rgba(0,   255, 157, 0.3); background: rgba(0,   255, 157, 0.07); }
+        .sev-badge.NONE   { color: var(--muted);  border-color: var(--border);             background: transparent; }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        .empty-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+            opacity: 0.4;
+        }
+
+        /* Verify box */
+        .verify-box {
+            display: none;
+            margin: 16px 0 0;
+            padding: 16px 20px;
+            border-radius: 10px;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--void); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.2); border-radius: 100px; }
     </style>
 </head>
 <body>
@@ -455,34 +399,21 @@
     <div class="orb orb-a"></div>
     <div class="orb orb-b"></div>
 
-    <!-- ── TOPBAR ── -->
+    <!-- Topbar -->
     <div class="topbar">
         <div class="topbar-left">
-            <a class="back-btn" href="/">← Dashboard</a>
+            <a class="back-btn" href="/">&#8592; Dashboard</a>
             <div class="breadcrumb">
                 Evidence &nbsp;/&nbsp; <span>File #{{ file_id }}</span>
             </div>
         </div>
         <div class="topbar-right">
             <button
-                class="btn-outline secondary"
-                onclick="document.getElementById('compare-input').click()"
-                id="compare-btn"
-                title="Check a copy of this file from elsewhere against the stored hash"
-            >
-                &#129514; Compare External Copy
-            </button>
-            <input
-                type="file"
-                id="compare-input"
-                style="display:none"
-                onchange="compareExternalFile({{ file_id }})"
-            />
-            <button
-                class="btn-outline"
-                onclick="verifyIntegrity({{ file_id }})"
                 id="verify-btn"
-                title="Re-check the stored evidence file against its original hash"
+                onclick="verifyIntegrity({{ file_id }})"
+                style="display:inline-flex; align-items:center; gap:8px; padding:9px 20px; border:1px solid rgba(0,212,255,0.4); border-radius:10px; background:rgba(0,212,255,0.08); color:var(--cyan); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans); transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(0,212,255,0.18)'"
+                onmouseout="this.style.background='rgba(0,212,255,0.08)'"
             >
                 &#128274; Verify Integrity
             </button>
@@ -490,34 +421,31 @@
                 &#128196; Export PDF Report
             </a>
         </div>
-        <div id="verify-result" class="verify-box"></div>
-        <div id="compare-result" class="verify-box"></div>
     </div>
 
-    <!-- ── PAGE ── -->
+    <!-- Page -->
     <div class="page">
 
         <!-- File header -->
         <div class="file-header">
-            <div class="file-header-icon">🔍</div>
+            <div class="file-header-icon">&#128269;</div>
             <div>
                 <div class="file-header-name">File #{{ file_id }}</div>
                 <div class="file-header-meta">
-                    <span>📊 {{ metadata | length }} metadata fields</span>
-                    <span>⚠ {{ indicators | length }} indicators</span>
+                    <span>&#128202; {{ metadata | length }} metadata fields</span>
+                    <span>&#9888; {{ indicators | length }} indicators</span>
                 </div>
             </div>
 
-            <!-- Highest severity badge -->
             {% set severities = indicators | map(attribute='severity') | list %}
             {% if 'HIGH' in severities %}
-                <span class="sev-badge HIGH">⚠ HIGH SEVERITY</span>
+                <span class="sev-badge HIGH">&#9888; HIGH SEVERITY</span>
             {% elif 'MEDIUM' in severities %}
-                <span class="sev-badge MEDIUM">⚡ MEDIUM SEVERITY</span>
+                <span class="sev-badge MEDIUM">&#9889; MEDIUM SEVERITY</span>
             {% elif 'LOW' in severities %}
-                <span class="sev-badge LOW">✓ LOW SEVERITY</span>
+                <span class="sev-badge LOW">&#10003; LOW SEVERITY</span>
             {% else %}
-                <span class="sev-badge NONE">— NO INDICATORS</span>
+                <span class="sev-badge NONE">&mdash; NO INDICATORS</span>
             {% endif %}
         </div>
 
@@ -551,16 +479,15 @@
                         </div>
                     {% else %}
                         <div class="empty">
-                            <div class="empty-icon">📭</div>
+                            <div class="empty-icon">&#128205;</div>
                             No metadata extracted from this file.
                         </div>
                     {% endif %}
                 </div>
             </div>
 
-
-            <!-- Right column: indicators + hashes -->
-            <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Right column -->
+            <div style="display:flex; flex-direction:column; gap:20px;">
 
                 <!-- Forensic indicators -->
                 <div class="panel">
@@ -576,10 +503,9 @@
                                 {% for ind in indicators %}
                                 <div class="ind-item {{ ind['severity'] }}">
                                     <div class="ind-sev {{ ind['severity'] }}">
-                                        {% if ind['severity'] == 'HIGH' %}⚠ HIGH
-                                        {% elif ind['severity'] == 'MEDIUM' %}⚡ MEDIUM
-                                        {% else %}✓ LOW
-                                        {% endif %}
+                                        {% if ind['severity'] == 'HIGH' %}&#9888; HIGH
+                                        {% elif ind['severity'] == 'MEDIUM' %}&#9889; MEDIUM
+                                        {% else %}&#10003; LOW{% endif %}
                                     </div>
                                     <div class="ind-desc">{{ ind['description'] }}</div>
                                 </div>
@@ -587,7 +513,7 @@
                             </div>
                         {% else %}
                             <div class="empty">
-                                <div class="empty-icon">✓</div>
+                                <div class="empty-icon">&#10003;</div>
                                 No indicators found.
                             </div>
                         {% endif %}
@@ -605,7 +531,7 @@
                     <div class="panel-body">
                         <div class="hash-block">
                             {% for row in metadata %}
-                                {% if row['key'] == 'MD5' or row['key'] == 'SHA1' or row['key'] == 'SHA256' %}
+                                {% if row['key'] in ['MD5', 'SHA1', 'SHA256'] %}
                                 <div class="hash-row">
                                     <span class="hash-algo">{{ row['key'] }}</span>
                                     <span class="hash-val">{{ row['value'] }}</span>
@@ -613,197 +539,136 @@
                                 {% endif %}
                             {% endfor %}
                         </div>
-                        <div style="
-                            margin-top: 12px;
-                            font-size: 10px;
-                            font-family: var(--mono);
-                            color: var(--muted);
-                            line-height: 1.7;
-                        ">
+                        <div style="margin-top:12px; font-size:10px; font-family:var(--mono); color:var(--muted); line-height:1.7;">
                             Hashes calculated on upload before any analysis.<br>
                             Use SHA256 to verify evidence integrity.
                         </div>
                     </div>
                 </div>
 
-            </div><!-- /right column -->
-
-        </div><!-- /two-col -->
-
-        <!-- External comparison log (per-file, never combined) -->
-        <div class="panel">
-            <div class="panel-head">
-                <div class="panel-title">
-                    <span class="dot v"></span>
-                    Comparison Log — File #{{ file_id }}
-                </div>
-            </div>
-            <div class="panel-body">
-                <table id="comparison-table" style="width:100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="text-align:left; border-bottom: 1px solid var(--border);">
-                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">TIMESTAMP</th>
-                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">COMPARED FILE</th>
-                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">RESULT</th>
-                            <th style="padding:6px 8px; font-size:10px; font-family:var(--mono); color:var(--muted); font-weight:600;">SHA256</th>
-                        </tr>
-                    </thead>
-                    <tbody id="comparison-tbody">
-                        {% if comparisons %}
-                            {% for c in comparisons %}
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                                <td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--muted);">{{ c['timestamp'][:19] }}</td>
-                                <td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text);">{{ c['compared_filename'] }}</td>
-                                <td style="padding:8px; font-size:11px; font-family:var(--mono);">
-                                    {% if c['match'] %}
-                                        <span style="color:var(--ok);">&#10003; MATCH</span>
-                                    {% else %}
-                                        <span style="color:var(--alert);">&#9888; MISMATCH</span>
-                                    {% endif %}
-                                </td>
-                                <td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text); word-break:break-all;">{{ c['compared_sha256'] }}</td>
-                            </tr>
-                            {% endfor %}
-                        {% endif %}
-                    </tbody>
-                </table>
-                <div id="comparison-empty" class="empty" {% if comparisons %}style="display:none;"{% endif %}>
-                    <div class="empty-icon">🧪</div>
-                    No external comparisons yet for this file. Use "Compare External Copy" above to log one.
-                </div>
             </div>
         </div>
 
-    </div><!-- /page -->
+        <!-- Integrity verification panel -->
+        <div style="padding:20px 24px; background:var(--surface); border:1px solid var(--border); border-radius:16px;">
+            <div style="font-size:11px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:10px;">
+                Integrity Verification
+            </div>
+            <div style="font-size:12px; font-family:var(--mono); color:var(--muted); margin-bottom:16px; line-height:1.7;">
+                To verify this file has not been tampered with, upload the current copy of the file below.
+                MetaSleuth will recalculate its hash and compare it against the hash recorded at original upload.
+            </div>
+            <input type="file" id="reverify-input" style="display:none;" onchange="runReverify({{ file_id }})"/>
+            <button
+                onclick="document.getElementById('reverify-input').click()"
+                style="display:inline-flex; align-items:center; gap:8px; padding:9px 20px; border:1px solid rgba(0,212,255,0.4); border-radius:10px; background:rgba(0,212,255,0.08); color:var(--cyan); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans); transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(0,212,255,0.18)'"
+                onmouseout="this.style.background='rgba(0,212,255,0.08)'"
+            >
+                &#128274; Upload File to Verify
+            </button>
+            <div id="verify-result" class="verify-box"></div>
+        </div>
+
+        <!-- Verification history -->
+        {% if verifications %}
+        <div style="padding:20px 24px; background:var(--surface); border:1px solid var(--border); border-radius:16px;">
+            <div style="font-size:11px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:14px;">
+                Verification History
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                {% for v in verifications %}
+                <div style="padding:12px 16px; border-radius:10px; border-left:3px solid {{ 'var(--ok)' if v.result == 'PASSED' else 'var(--alert)' }}; background:{{ 'rgba(0,255,157,0.04)' if v.result == 'PASSED' else 'rgba(255,51,102,0.05)' }};">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-size:12px; font-weight:600; color:{{ 'var(--ok)' if v.result == 'PASSED' else 'var(--alert)' }};">
+                            {% if v.result == 'PASSED' %}&#10003; PASSED{% else %}&#9888; FAILED{% endif %}
+                        </span>
+                        <span style="font-size:10px; font-family:var(--mono); color:var(--muted);">
+                            {{ v.verified_at[:19] }}
+                        </span>
+                    </div>
+                    <div style="font-size:11px; font-family:var(--mono); color:var(--muted); line-height:1.7;">
+                        Compared against: <span style="color:var(--text);">{{ v.compared_filename }}</span><br>
+                        Original SHA256:&nbsp; <span style="color:var(--text);">{{ v.original_sha256[:32] }}...</span><br>
+                        Submitted SHA256: <span style="color:var(--text);">{{ v.submitted_sha256[:32] }}...</span><br>
+                        Analyst: <span style="color:var(--cyan);">{{ v.analyst }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
     <script>
-        function showBox(el, state, html) {
-            el.classList.remove('ok', 'alert');
-            el.classList.add('show', state);
-            el.innerHTML = html;
-        }
-
-        async function verifyIntegrity(fileId) {
-            const btn    = document.getElementById('verify-btn');
+        // Verify integrity by re-uploading the file
+        async function runReverify(fileId) {
+            const input  = document.getElementById('reverify-input');
             const result = document.getElementById('verify-result');
+            const file   = input.files[0];
 
-            btn.textContent = 'Verifying...';
-            btn.disabled    = true;
-
-            try {
-                const response = await fetch('/verify/' + fileId, {
-                    method: 'POST'
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || (data.error && !data.verified)) {
-                    showBox(result, 'alert', '&#9888; ' + (data.error || 'Verification failed.'));
-                    return;
-                }
-
-                if (data.verified) {
-                    showBox(result, 'ok',
-                        '&#10003; INTEGRITY VERIFIED — File has not been modified since upload.<br><br>' +
-                        'Original SHA256:&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
-                        'Current SHA256:&nbsp;&nbsp;&nbsp;' + data.current_sha256 + '<br><br>' +
-                        'Both values match. Chain of custody is intact.'
-                    );
-                } else {
-                    showBox(result, 'alert',
-                        '&#9888; INTEGRITY FAILURE — File has been modified since upload.<br><br>' +
-                        'Original SHA256:&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
-                        'Current SHA256:&nbsp;&nbsp;&nbsp;' + data.current_sha256 + '<br><br>' +
-                        'These values do not match. The file has changed. ' +
-                        'Do not use as evidence without further investigation.'
-                    );
-                }
-
-            } catch (err) {
-                showBox(result, 'alert', '&#9888; Connection error — could not reach server.');
-            } finally {
-                btn.textContent = '\u{1F512} Verify Integrity';
-                btn.disabled    = false;
-            }
-        }
-
-        async function compareExternalFile(fileId) {
-            const input  = document.getElementById('compare-input');
-            const btn    = document.getElementById('compare-btn');
-            const result = document.getElementById('compare-result');
-
-            const file = input.files[0];
             if (!file) return;
 
-            const originalLabel = btn.innerHTML;
-            btn.textContent = 'Comparing...';
-            btn.disabled    = true;
+            result.style.display    = 'block';
+            result.style.background = 'rgba(14,14,31,0.8)';
+            result.style.border     = '1px solid var(--border)';
+            result.style.color      = 'var(--muted)';
+            result.innerHTML        = 'Calculating hash of uploaded file...';
 
             const formData = new FormData();
-            formData.append('compare_file', file);
+            formData.append('file', file);
 
             try {
-                const response = await fetch('/verify-external/' + fileId, {
+                const response = await fetch('/reverify/' + fileId, {
                     method: 'POST',
-                    body: formData
+                    body:   formData
                 });
 
                 const data = await response.json();
 
-                if (!response.ok || data.error) {
-                    showBox(result, 'alert', '&#9888; ' + (data.error || 'Comparison failed.'));
+                if (data.error) {
+                    result.style.background = 'rgba(255,51,102,0.08)';
+                    result.style.border     = '1px solid rgba(255,51,102,0.3)';
+                    result.style.color      = 'var(--alert)';
+                    result.innerHTML        = '&#9888; ' + data.error;
                     return;
                 }
 
                 if (data.verified) {
-                    showBox(result, 'ok',
-                        '&#10003; MATCH — "' + data.compared_filename + '" is identical to the stored evidence file.<br><br>' +
-                        'Stored SHA256:&nbsp;&nbsp;&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
-                        'Compared SHA256:&nbsp;' + data.current_sha256 + '<br><br>' +
-                        'This external copy has not been altered relative to the file on record.'
-                    );
+                    result.style.background = 'rgba(0,255,157,0.06)';
+                    result.style.border     = '1px solid rgba(0,255,157,0.25)';
+                    result.style.color      = 'var(--ok)';
+                    result.innerHTML =
+                        '&#10003; INTEGRITY VERIFIED<br><br>' +
+                        'The uploaded file matches the original hash recorded at time of collection.<br><br>' +
+                        '<strong>Original SHA256:</strong> ' + data.original_sha256 + '<br>' +
+                        '<strong>Current&nbsp; SHA256:</strong> ' + data.new_sha256 + '<br><br>' +
+                        'Chain of custody is intact. This file has not been modified.';
                 } else {
-                    showBox(result, 'alert',
-                        '&#9888; MISMATCH — "' + data.compared_filename + '" is NOT identical to the stored evidence file.<br><br>' +
-                        'Stored SHA256:&nbsp;&nbsp;&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
-                        'Compared SHA256:&nbsp;' + data.current_sha256 + '<br><br>' +
-                        'These are different files, or this copy has been modified.'
-                    );
+                    result.style.background = 'rgba(255,51,102,0.08)';
+                    result.style.border     = '1px solid rgba(255,51,102,0.3)';
+                    result.style.color      = 'var(--alert)';
+                    result.innerHTML =
+                        '&#9888; INTEGRITY FAILURE<br><br>' +
+                        'The uploaded file does NOT match the original hash.<br><br>' +
+                        '<strong>Original SHA256:</strong> ' + data.original_sha256 + '<br>' +
+                        '<strong>Current&nbsp; SHA256:</strong> ' + data.new_sha256 + '<br><br>' +
+                        'These values differ. The file has been modified since original collection. ' +
+                        'Do not use as evidence without further forensic examination.';
                 }
 
-                addComparisonRow(data);
-
             } catch (err) {
-                showBox(result, 'alert', '&#9888; Connection error — could not reach server.');
-            } finally {
-                btn.innerHTML   = originalLabel;
-                btn.disabled    = false;
-                input.value     = ''; // reset so the same file can be re-picked
+                result.style.color = 'var(--alert)';
+                result.innerHTML   = 'Connection error — could not reach server.';
             }
         }
 
-        function addComparisonRow(data) {
-            const tbody = document.getElementById('comparison-tbody');
-            const empty = document.getElementById('comparison-empty');
-            if (empty) empty.style.display = 'none';
-
-            const row = document.createElement('tr');
-            row.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
-
-            const resultHtml = data.verified
-                ? '<span style="color:var(--ok);">&#10003; MATCH</span>'
-                : '<span style="color:var(--alert);">&#9888; MISMATCH</span>';
-
-            const timestamp = (data.timestamp || new Date().toISOString()).slice(0, 19);
-
-            row.innerHTML =
-                '<td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--muted);">' + timestamp + '</td>' +
-                '<td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text);">' + data.compared_filename + '</td>' +
-                '<td style="padding:8px; font-size:11px; font-family:var(--mono);">' + resultHtml + '</td>' +
-                '<td style="padding:8px; font-size:11px; font-family:var(--mono); color:var(--text); word-break:break-all;">' + data.current_sha256 + '</td>';
-
-            tbody.insertBefore(row, tbody.firstChild);
+        // Keep verify btn working from topbar too
+        async function verifyIntegrity(fileId) {
+            document.getElementById('reverify-input').click();
         }
-        </script>
+    </script>
 
 </body>
 </html>
