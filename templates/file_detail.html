@@ -404,7 +404,7 @@
         <div class="topbar-left">
             <a class="back-btn" href="/">&#8592; Dashboard</a>
             <div class="breadcrumb">
-                Evidence &nbsp;/&nbsp; <span>File #{{ file_id }}</span>
+                Evidence &nbsp;/&nbsp; <span>File #{{ case_number }}</span>
             </div>
         </div>
         <div class="topbar-right">
@@ -430,7 +430,7 @@
         <div class="file-header">
             <div class="file-header-icon">&#128269;</div>
             <div>
-                <div class="file-header-name">File #{{ file_id }}</div>
+                <div class="file-header-name">File #{{ case_number }}</div>
                 <div class="file-header-meta">
                     <span>&#128202; {{ metadata | length }} metadata fields</span>
                     <span>&#9888; {{ indicators | length }} indicators</span>
@@ -598,6 +598,40 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- Audit trail — scoped to this file only, not the global log -->
+        <div style="padding:20px 24px; background:var(--surface); border:1px solid var(--border); border-radius:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                <div style="font-size:11px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:0.12em;">
+                    Audit Trail &mdash; This File Only
+                </div>
+                <a href="/auditlog?file_id={{ file_id }}" style="font-size:11px; font-family:var(--mono); color:var(--cyan); text-decoration:none;">
+                    Open full-page view &rarr;
+                </a>
+            </div>
+            {% if audit_entries %}
+                <div style="display:flex; flex-direction:column;">
+                    <div style="display:grid; grid-template-columns:160px 90px 1fr 120px; gap:12px; padding-bottom:10px; font-size:9px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.1em;">
+                        <span>Timestamp</span>
+                        <span>Action</span>
+                        <span>Detail</span>
+                        <span>Analyst</span>
+                    </div>
+                    {% for a in audit_entries %}
+                    <div style="display:grid; grid-template-columns:160px 90px 1fr 120px; gap:12px; padding:9px 0; border-top:1px solid rgba(255,255,255,0.04); font-size:11px; font-family:var(--mono); align-items:center;">
+                        <span style="color:var(--muted);">{{ a.timestamp[:19] if a.timestamp else '' }}</span>
+                        <span style="color:var(--cyan); font-weight:600;">{{ a.action }}</span>
+                        <span style="color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.detail }}</span>
+                        <span style="color:var(--muted);">{{ a.analyst }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="font-size:12px; font-family:var(--mono); color:var(--muted);">
+                    No audit entries recorded for this file yet.
+                </div>
+            {% endif %}
+        </div>
 
     </div>
 

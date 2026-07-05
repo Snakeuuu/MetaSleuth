@@ -18,21 +18,28 @@ def analyze_word(filepath):
         # to that XML properties file
         props = doc.core_properties
 
+        # NOTE: python-docx's CoreProperties only exposes the fields
+        # actually stored in docProps/core.xml. 'company', 'template',
+        # and 'total_time' were never real attributes on this object —
+        # that typo/assumption is what raised
+        # "'CoreProperties' object has no attribute 'company'" and
+        # made every Word file fail with the same one error.
         fields = {
             'Author':            props.author,
             'Last Modified By':  props.last_modified_by,
             'Created':           props.created,
             'Modified':          props.modified,
             'Last Printed':      props.last_printed,
-            'Company':           props.company,
             'Category':          props.category,
-            'Description':       props.description,
             'Keywords':          props.keywords,
             'Subject':           props.subject,
             'Title':             props.title,
             'Revision Number':   props.revision,
-            'Total Editing Time': props.total_time,  # in minutes
-            'Template':          props.template,
+            'Comments':          props.comments,
+            'Content Status':    props.content_status,
+            'Identifier':        props.identifier,
+            'Language':          props.language,
+            'Version':           props.version,
         }
 
         for key, value in fields.items():
