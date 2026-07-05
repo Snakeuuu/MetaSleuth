@@ -31,7 +31,7 @@ def analyze_image(filepath):
         # TAGS is a dictionary that translates codes to names
         # e.g. 271 → "Make", 272 → "Model"
         for tag_code, value in exif_data.items():
-            tag_name = TAGS.get(tag_code, str(tag_code))
+            tag_name = TAGS.get(tag_code)
 
             # Skip raw binary thumbnail data — not useful as text
             if tag_name == 'MakerNote':
@@ -39,7 +39,21 @@ def analyze_image(filepath):
             if isinstance(value, bytes):
                 continue
 
-            metadata[tag_name] = str(value)
+            value_str = str(value)
+
+            if tag_name is None:
+                # Pillow doesn't have a friendly name for this tag code —
+                # usually a newer standard tag or manufacturer-specific
+                # field it hasn't caught up to yet. If it's genuinely
+                # empty (0, "", None) it carries no forensic value, so
+                # skip it rather than clutter the report with noise.
+                # If it DOES have real content, keep it but label clearly
+                # so it doesn't look like a random unlabeled number.
+                if value_str in ('0', '', 'None'):
+                    continue
+                tag_name = f'Unknown Tag ({tag_code})'
+
+            metadata[tag_name] = value_str
 
         # GPS data is nested inside EXIF under a special tag (34853)
         # It needs its own extraction process

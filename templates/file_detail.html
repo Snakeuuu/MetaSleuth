@@ -472,7 +472,11 @@
                                     {% elif 'Software' in row['key'] %}warn
                                     {% endif %}
                                 ">
-                                    {{ row['value'] }}
+                                    {% if row['value'] and (row['value'].startswith('http://') or row['value'].startswith('https://')) %}
+                                        <a href="{{ row['value'] }}" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(0,212,255,0.4);">{{ row['value'] }}</a>
+                                    {% else %}
+                                        {{ row['value'] }}
+                                    {% endif %}
                                 </span>
                             </div>
                             {% endfor %}
@@ -549,6 +553,34 @@
             </div>
         </div>
 
+        <!-- Embedded location map — only rendered when GPS data was found -->
+        {% if gps_lat and gps_lon %}
+        <div class="panel">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="dot o"></span>
+                    Location — GPS Data Embedded
+                </div>
+                <a href="https://maps.google.com/?q={{ gps_lat }},{{ gps_lon }}" target="_blank" rel="noopener" class="btn-outline">
+                    &#128506; Open in Google Maps
+                </a>
+            </div>
+            <div class="panel-body" style="padding:0;">
+                <iframe
+                    style="width:100%; height:320px; border:0; display:block;"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://maps.google.com/maps?q={{ gps_lat }},{{ gps_lon }}&z=15&output=embed">
+                </iframe>
+                <div style="padding:14px 24px; font-size:11px; font-family:var(--mono); color:var(--muted);">
+                    Coordinates: <span style="color:var(--ok);">{{ gps_lat }}, {{ gps_lon }}</span>
+                    &nbsp;—&nbsp; extracted directly from this file's embedded metadata.
+                    This is a HIGH severity finding in forensic investigations, as it reveals a physical location.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Integrity verification panel -->
         <div style="padding:20px 24px; background:var(--surface); border:1px solid var(--border); border-radius:16px;">
             <div style="font-size:11px; font-family:var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:10px;">
@@ -588,7 +620,11 @@
                         </span>
                     </div>
                     <div style="font-size:11px; font-family:var(--mono); color:var(--muted); line-height:1.7;">
-                        Compared against: <span style="color:var(--text);">{{ v.compared_filename }}</span><br>
+                        Compared against: <span style="color:var(--text);">{{ v.compared_filename }}</span>
+                        {% if v.stored_filename %}
+                        &nbsp;—&nbsp;<a href="/comparison-file/{{ v.id }}" style="color:var(--cyan); text-decoration:none;">&#128190; view/download file</a>
+                        {% endif %}
+                        <br>
                         Original SHA256:&nbsp; <span style="color:var(--text);">{{ v.original_sha256[:32] }}...</span><br>
                         Submitted SHA256: <span style="color:var(--text);">{{ v.submitted_sha256[:32] }}...</span><br>
                         Analyst: <span style="color:var(--cyan);">{{ v.analyst }}</span>

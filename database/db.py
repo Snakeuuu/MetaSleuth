@@ -17,6 +17,19 @@ def get_connection():
     return conn
 
 
+def _add_column_if_missing(cursor, table, column, coltype):
+    """
+    SQLite has no "ALTER TABLE ... ADD COLUMN IF NOT EXISTS", so we
+    check manually. This lets us add new columns to a database that
+    already exists (from before this feature was added) without
+    losing any existing data.
+    """
+    cursor.execute(f'PRAGMA table_info({table})')
+    existing_columns = [row[1] for row in cursor.fetchall()]
+    if column not in existing_columns:
+        cursor.execute(f'ALTER TABLE {table} ADD COLUMN {column} {coltype}')
+
+
 def create_tables():
     """
     Creates all the tables if they don't exist yet.
@@ -123,6 +136,12 @@ def create_tables():
             FOREIGN KEY (file_id) REFERENCES files(id)
         )
     ''')
+
+    # Add the stored_filename column for anyone upgrading from an
+    # older database that doesn't have it yet. This is the actual
+    # saved copy of whatever file was uploaded to compare against
+    # the evidence — kept permanently so you can look back at it.
+    _add_column_if_missing(cursor, 'verifications', 'stored_filename', 'TEXT')
 
     conn.commit()  # "commit" means save everything permanently
     conn.close()   # always close the connection when done
@@ -316,18 +335,22 @@ def get_comparisons(file_id):
 
 
 def save_verification(file_id, compared_filename, original_sha256,
-                       submitted_sha256, match, analyst):
+                       submitted_sha256, match, analyst, stored_filename=None):
     """
     Saves a permanent record of every verification attempt —
     who verified, what file they used, when, and whether it passed.
+
+    stored_filename is the name of the actual saved copy of the
+    uploaded comparison file (kept in COMPARISON_FOLDER), so you can
+    always download/re-open the exact file that was checked.
     """
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO verifications
             (file_id, verified_at, compared_filename,
-             original_sha256, submitted_sha256, result, analyst)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+             original_sha256, submitted_sha256, result, analyst, stored_filename)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             file_id,
             datetime.now().isoformat(),
@@ -335,10 +358,13 @@ def save_verification(file_id, compared_filename, original_sha256,
             original_sha256,
             submitted_sha256,
             'PASSED' if match else 'FAILED',
-            analyst
+            analyst,
+            stored_filename
         ))
+    verification_id = cursor.lastrowid
     conn.commit()
     conn.close()
+    return verification_id
 
 
 def get_verifications(file_id):

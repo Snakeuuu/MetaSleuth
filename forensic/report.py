@@ -700,19 +700,25 @@ def build_provenance_section(story, styles):
     story.append(prov_table)
 
 
-def build_audit_section(story, styles, audit_entries):
+def build_audit_section(story, styles, audit_entries, file_record=None):
     """
     Section 6 — Chain of Custody / Audit Log.
-    Every action taken against this evidence file,
-    in chronological order.
-    This is the legal backbone of the report.
+    Every action taken against THIS evidence file, and only this
+    file, in chronological order. This is the legal backbone of
+    the report — mirrors the "Audit Trail — This File Only" panel
+    shown on the file's page on the website.
     """
-    story.append(Paragraph('6.  Chain of Custody — Audit Log', styles['section_head']))
+    heading = '6.  Chain of Custody — Audit Log (This File Only)'
+    story.append(Paragraph(heading, styles['section_head']))
     story.append(HRFlowable(width='100%', thickness=0.5, color=OK, spaceAfter=8))
+
+    filename_note = f' for <b>{file_record["filename"]}</b>' if file_record else ''
     story.append(Paragraph(
-        'Every action performed on this evidence file has been automatically '
-        'logged. This log establishes an unbroken chain of custody from '
-        'initial acquisition through to report generation.',
+        f'Every action performed on this evidence file{filename_note} has been '
+        'automatically logged. This log establishes an unbroken chain of '
+        'custody from initial acquisition through to report generation, '
+        'and includes only entries tied to this specific file — never '
+        'actions performed on other evidence.',
         styles['body']
     ))
     story.append(Spacer(1, 6))
@@ -730,10 +736,12 @@ def build_audit_section(story, styles, audit_entries):
         ]
     ]
 
+    cyan_hex = '#' + CYAN.hexval()[2:]
+
     for entry in audit_entries:
         audit_rows.append([
             Paragraph(str(entry.get('timestamp', ''))[:19], styles['mono']),
-            Paragraph(str(entry.get('action',    '')),       styles['body']),
+            Paragraph(f'<font color="{cyan_hex}"><b>{entry.get("action", "")}</b></font>', styles['body']),
             Paragraph(str(entry.get('detail',    '')),       styles['body']),
             Paragraph(str(entry.get('analyst',   '')),       styles['body']),
         ])
@@ -883,7 +891,7 @@ def generate_report(output_path, file_record, metadata,
     build_provenance_section(story, styles)
     story.append(Spacer(1, 8))
 
-    build_audit_section(story, styles, audit_entries)
+    build_audit_section(story, styles, audit_entries, file_record=file_record)
     story.append(PageBreak())
 
     build_comparison_section(story, styles, comparisons or [])

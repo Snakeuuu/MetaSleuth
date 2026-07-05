@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from datetime import datetime
 
-from config import (UPLOAD_FOLDER, REPORT_FOLDER, DATABASE,
+from config import (UPLOAD_FOLDER, REPORT_FOLDER, COMPARISON_FOLDER, DATABASE,
                     MAX_FILE_SIZE, ALLOWED_EXTENSIONS,
                     ANALYST_NAME, TOOL_VERSION)
 
@@ -72,41 +72,59 @@ def run_analysis(filepath, filename):
     """
     The master function that orchestrates everything.
     Called once per uploaded file.
+
+    file_id is created FIRST (before any analysis), so every single
+    step below — HASH, ANALYZE, FLAG, SAVE — gets logged against the
+    correct file from the very start. This is what makes a genuinely
+    separate, per-file audit trail possible.
     """
 
     hashes    = calculate_hashes(filepath)
     file_size = os.path.getsize(filepath)
     file_type = get_file_type(filename)
 
+    file_id = save_file_record(
+        filename  = filename,
+        file_type = file_type,
+        file_size = file_size,
+        md5       = hashes['md5'],
+        sha1      = hashes['sha1'],
+        sha256    = hashes['sha256'],
+        analyst   = ANALYST_NAME
+    )
+
+    log_action('UPLOAD', f'Evidence received: {filename}',
+               ANALYST_NAME, TOOL_VERSION, file_id=file_id)
+
     log_action('HASH', f'{filename} — SHA256: {hashes["sha256"][:16]}...',
-               ANALYST_NAME, TOOL_VERSION)
+               ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     metadata = {}
 
     if file_type == 'image':
         metadata = analyze_image(filepath)
         log_action('ANALYZE', f'Image analysis complete: {filename}',
-                   ANALYST_NAME, TOOL_VERSION)
+                   ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     elif file_type == 'pdf':
         metadata = analyze_pdf(filepath)
         log_action('ANALYZE', f'PDF analysis complete: {filename}',
-                   ANALYST_NAME, TOOL_VERSION)
+                   ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     elif file_type == 'word':
         metadata = analyze_word(filepath)
         log_action('ANALYZE', f'Word document analysis complete: {filename}',
-                   ANALYST_NAME, TOOL_VERSION)
+                   ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     elif file_type == 'audio':
         metadata = analyze_audio(filepath)
         log_action('ANALYZE', f'Audio analysis complete: {filename}',
-                   ANALYST_NAME, TOOL_VERSION)
+                   ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     elif file_type == 'video':
         metadata = analyze_video(filepath)
         log_action('ANALYZE', f'Video analysis complete: {filename}',
-                   ANALYST_NAME, TOOL_VERSION)
+                   ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     else:
         metadata = {'Status': 'File type not supported for deep analysis'}
@@ -127,26 +145,16 @@ def run_analysis(filepath, filename):
     if high_count > 0:
         log_action('FLAG',
                    f'{high_count} HIGH severity indicator(s) in {filename}',
-                   ANALYST_NAME, TOOL_VERSION)
+                   ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     timeline = build_timeline(metadata, filename)
-
-    file_id = save_file_record(
-        filename  = filename,
-        file_type = file_type,
-        file_size = file_size,
-        md5       = hashes['md5'],
-        sha1      = hashes['sha1'],
-        sha256    = hashes['sha256'],
-        analyst   = ANALYST_NAME
-    )
 
     save_metadata(file_id, metadata)
     save_indicators(file_id, indicators)
 
     log_action('SAVE',
                f'Results saved to database — File ID: {file_id}',
-               ANALYST_NAME, TOOL_VERSION)
+               ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     return {
         'file_id':    file_id,
@@ -206,9 +214,6 @@ def upload_file():
 
     file.save(filepath)
 
-    log_action('UPLOAD', f'Evidence received: {filename}',
-               ANALYST_NAME, TOOL_VERSION)
-
     results = run_analysis(filepath, filename)
 
     return jsonify(results)
@@ -219,12 +224,30 @@ def file_detail(file_id):
     metadata      = get_file_metadata(file_id)
     indicators    = get_file_indicators(file_id)
     verifications = get_verifications(file_id)
+    audit_entries = get_audit_log(file_id=file_id)  # THIS file's trail only
+
+    # Pull out GPS coordinates (if present) so the template can render
+    # an embedded map. Metadata is stored as "lat, lon" text, e.g.
+    # "28.613900, 77.209000" — see analyzers/image.py.
+    gps_lat, gps_lon = None, None
+    for row in metadata:
+        if row['key'] == 'GPS Coordinates':
+            try:
+                lat_str, lon_str = row['value'].split(',')
+                gps_lat = float(lat_str.strip())
+                gps_lon = float(lon_str.strip())
+            except (ValueError, AttributeError):
+                pass  # malformed GPS text shouldn't break the whole page
+            break
 
     return render_template('file_detail.html',
                            file_id       = file_id,
                            metadata      = metadata,
                            indicators    = indicators,
-                           verifications = verifications)
+                           verifications = verifications,
+                           audit_entries = audit_entries,
+                           gps_lat       = gps_lat,
+                           gps_lon       = gps_lon)
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
 def delete_file(file_id):
@@ -248,13 +271,25 @@ def delete_file(file_id):
         'DELETE',
         f'File permanently deleted: {filename} (ID: {file_id})',
         ANALYST_NAME,
-        TOOL_VERSION
+        TOOL_VERSION,
+        file_id=file_id
     )
 
-    cursor.execute('DELETE FROM indicators   WHERE file_id = ?', (file_id,))
-    cursor.execute('DELETE FROM metadata     WHERE file_id = ?', (file_id,))
-    cursor.execute('DELETE FROM comparisons  WHERE file_id = ?', (file_id,))
-    cursor.execute('DELETE FROM files        WHERE id = ?',      (file_id,))
+    # Delete stored comparison-file copies from disk before removing
+    # their DB records, so nothing gets orphaned in COMPARISON_FOLDER
+    cursor.execute('SELECT stored_filename FROM verifications WHERE file_id = ?', (file_id,))
+    for v_row in cursor.fetchall():
+        stored_name = v_row['stored_filename']
+        if stored_name:
+            stored_path = os.path.join(COMPARISON_FOLDER, stored_name)
+            if os.path.exists(stored_path):
+                os.remove(stored_path)
+
+    cursor.execute('DELETE FROM indicators    WHERE file_id = ?', (file_id,))
+    cursor.execute('DELETE FROM metadata      WHERE file_id = ?', (file_id,))
+    cursor.execute('DELETE FROM comparisons   WHERE file_id = ?', (file_id,))
+    cursor.execute('DELETE FROM verifications WHERE file_id = ?', (file_id,))
+    cursor.execute('DELETE FROM files         WHERE id = ?',      (file_id,))
     conn.commit()
     conn.close()
 
@@ -283,8 +318,7 @@ def export_report(file_id):
     file_record    = dict(file_row)
     metadata_rows  = get_file_metadata(file_id)
     indicator_rows = get_file_indicators(file_id)
-    audit_rows     = get_audit_log()
-    
+    audit_rows     = get_audit_log(file_id=file_id)  # scoped to THIS file only
 
     metadata   = {row['key']: row['value'] for row in metadata_rows}
     indicators = [{'severity': row['severity'],
@@ -303,13 +337,12 @@ def export_report(file_id):
         indicators    = indicators,
         timeline      = timeline,
         audit_entries = audit,
-        
         case_id       = 'CASE-001'
     )
 
     log_action('REPORT',
                f'PDF report exported for file ID {file_id}: {report_filename}',
-               ANALYST_NAME, TOOL_VERSION)
+               ANALYST_NAME, TOOL_VERSION, file_id=file_id)
 
     return send_file(
         report_path,
@@ -497,7 +530,8 @@ def verify_file(file_id):
         f'Integrity check for {filename} — '
         f'{"PASSED" if match else "FAILED — hash mismatch"}',
         ANALYST_NAME,
-        TOOL_VERSION
+        TOOL_VERSION,
+        file_id=file_id
     )
 
     return jsonify({
@@ -529,25 +563,32 @@ def reverify_file(file_id):
     if not file_row:
         return jsonify({'error': 'Original file record not found'}), 404
 
-    temp_filename = f'reverify_{file_id}_{secure_filename(file.filename)}'
-    temp_path     = os.path.join(UPLOAD_FOLDER, temp_filename)
-    file.save(temp_path)
+    # Save the uploaded comparison file PERMANENTLY (not a temp file
+    # we throw away). This is the whole point — being able to look
+    # back later and see exactly which file was used for this check.
+    # Named with a timestamp so two comparisons never overwrite each
+    # other, even if uploaded under the same original filename.
+    safe_original_name = secure_filename(file.filename) or 'comparison_file'
+    stored_filename = f'{file_id}_{datetime.now().strftime("%Y%m%d%H%M%S")}_{safe_original_name}'
+    stored_path     = os.path.join(COMPARISON_FOLDER, stored_filename)
+    file.save(stored_path)
 
-    new_hashes = calculate_hashes(temp_path)
-    os.remove(temp_path)
+    new_hashes = calculate_hashes(stored_path)
 
     original_sha256 = file_row['sha256']
     new_sha256      = new_hashes['sha256']
     match           = original_sha256 == new_sha256
 
-    # Save permanently to database
-    save_verification(
+    # Save permanently to database, including where the actual
+    # comparison file now lives
+    verification_id = save_verification(
         file_id          = file_id,
         compared_filename= file.filename,
         original_sha256  = original_sha256,
         submitted_sha256 = new_sha256,
         match            = match,
-        analyst          = ANALYST_NAME
+        analyst          = ANALYST_NAME,
+        stored_filename  = stored_filename
     )
 
     log_action(
@@ -555,7 +596,8 @@ def reverify_file(file_id):
         f'Re-verification for {file_row["filename"]} against '
         f'"{file.filename}" — {"PASSED" if match else "FAILED"}',
         ANALYST_NAME,
-        TOOL_VERSION
+        TOOL_VERSION,
+        file_id=file_id
     )
 
     return jsonify({
@@ -566,7 +608,40 @@ def reverify_file(file_id):
         'new_sha256':      new_sha256,
         'original_md5':    file_row['md5'],
         'new_md5':         new_hashes['md5'],
+        'verification_id': verification_id,
     })
+
+
+@app.route('/comparison-file/<int:verification_id>')
+def download_comparison_file(verification_id):
+    """
+    Lets you open/download the exact file that was uploaded for a
+    past verification check — so "what did I actually compare this
+    against?" always has a real answer, not just a filename string.
+    """
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM verifications WHERE id = ?', (verification_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({'error': 'Verification record not found'}), 404
+
+    stored_filename = row['stored_filename']
+    if not stored_filename:
+        return jsonify({'error': 'No stored copy exists for this verification '
+                                  '(it was logged before this feature was added).'}), 404
+
+    stored_path = os.path.join(COMPARISON_FOLDER, stored_filename)
+    if not os.path.exists(stored_path):
+        return jsonify({'error': 'Stored comparison file is missing from disk.'}), 404
+
+    return send_file(
+        stored_path,
+        as_attachment=True,
+        download_name=row['compared_filename']
+    )
 
 # ---------------------------------------------------------------
 # STARTUP
@@ -575,6 +650,7 @@ def reverify_file(file_id):
 if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(REPORT_FOLDER, exist_ok=True)
+    os.makedirs(COMPARISON_FOLDER, exist_ok=True)
     os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
 
     create_tables()

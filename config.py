@@ -9,6 +9,12 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 # Where finished PDF reports will be saved
 REPORT_FOLDER = os.path.join(BASE_DIR, 'reports')
 
+# Where copies of files uploaded for "Verify"/"Compare" checks are kept
+# permanently, so you can always look back at exactly what was compared
+# against each piece of evidence. Kept separate from UPLOAD_FOLDER so
+# comparison copies never get mistaken for the original evidence files.
+COMPARISON_FOLDER = os.path.join(BASE_DIR, 'comparisons')
+
 # Where the database file lives
 DATABASE = os.path.join(BASE_DIR, 'database', 'metasleuth.db')
 
