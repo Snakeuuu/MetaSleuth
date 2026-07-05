@@ -276,6 +276,15 @@
             color: var(--text);
             word-break: break-all;
         }
+        .verify-box {
+            display: none;
+            margin: 16px 0;
+            padding: 16px 20px;
+            border-radius: 10px;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.8;
+        }
 
         /* ── INDICATOR ITEMS ── */
         .ind-list {
@@ -404,10 +413,38 @@
             </div>
         </div>
         <div class="topbar-right">
+            <button
+                class="btn-outline"
+                onclick="verifyIntegrity({{ file_id }})"
+                id="verify-btn"
+            >
+                &#128274; Verify Integrity
+            </button>
             <a class="btn-primary" href="/report/{{ file_id }}">
-                📄 Export PDF Report
+                &#128196; Export PDF Report
             </a>
         </div>
+        <div id="verify-result" style="display:none;margin:16px 32px 0;padding:16px 20px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.8;"></div>
+    </div>
+
+    <!-- ── PAGE ── -->
+    <div class="page">
+
+        <!-- File header -->
+        <div class="file-header">
+    line-height: 1.8;
+">
+</div>
+    </div>
+
+    <!-- ── PAGE ── -->
+    <div class="page">
+
+        <!-- File header -->
+        <div class="file-header">
+    line-height: 1.8;
+">
+</div>
     </div>
 
     <!-- ── PAGE ── -->
@@ -546,6 +583,64 @@
         </div><!-- /two-col -->
 
     </div><!-- /page -->
+    <script>
+        async function verifyIntegrity(fileId) {
+            const btn    = document.getElementById('verify-btn');
+            const result = document.getElementById('verify-result');
+        
+            btn.textContent = 'Verifying...';
+            btn.disabled    = true;
+        
+            try {
+                const response = await fetch('/verify/' + fileId, {
+                    method: 'POST'
+                });
+        
+                const data = await response.json();
+                btn.textContent = '&#128274; Verify Integrity';
+                btn.disabled    = false;
+        
+                if (data.error && !data.verified) {
+                    result.style.display      = 'block';
+                    result.style.background   = 'rgba(255,51,102,0.08)';
+                    result.style.border       = '1px solid rgba(255,51,102,0.3)';
+                    result.style.color        = 'var(--alert)';
+                    result.innerHTML          = '&#9888; ' + data.error;
+                    return;
+                }
+        
+                if (data.verified) {
+                    result.style.display    = 'block';
+                    result.style.background = 'rgba(0,255,157,0.06)';
+                    result.style.border     = '1px solid rgba(0,255,157,0.25)';
+                    result.style.color      = 'var(--ok)';
+                    result.innerHTML =
+                        '&#10003; INTEGRITY VERIFIED — File has not been modified since upload.<br><br>' +
+                        'Original SHA256:&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
+                        'Current SHA256:&nbsp;&nbsp;&nbsp;' + data.current_sha256 + '<br><br>' +
+                        'Both values match. Chain of custody is intact.';
+                } else {
+                    result.style.display    = 'block';
+                    result.style.background = 'rgba(255,51,102,0.08)';
+                    result.style.border     = '1px solid rgba(255,51,102,0.3)';
+                    result.style.color      = 'var(--alert)';
+                    result.innerHTML =
+                        '&#9888; INTEGRITY FAILURE — File has been modified since upload.<br><br>' +
+                        'Original SHA256:&nbsp;&nbsp;' + data.original_sha256 + '<br>' +
+                        'Current SHA256:&nbsp;&nbsp;&nbsp;' + data.current_sha256 + '<br><br>' +
+                        'These values do not match. The file has changed. ' +
+                        'Do not use as evidence without further investigation.';
+                }
+        
+            } catch (err) {
+                btn.textContent = '&#128274; Verify Integrity';
+                btn.disabled    = false;
+                result.style.display  = 'block';
+                result.style.color    = 'var(--alert)';
+                result.innerHTML      = 'Connection error — could not reach server.';
+            }
+        }
+        </script>
 
 </body>
 </html>

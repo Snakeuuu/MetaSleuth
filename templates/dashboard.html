@@ -188,7 +188,7 @@
 
 .file-row {
     display: grid;
-    grid-template-columns: 36px 1fr 70px 60px 80px 36px;
+    grid-template-columns: 36px 1fr 70px 60px 80px 36px ;
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
@@ -770,26 +770,23 @@
 
                 <div class="file-row" id="file-row-{{ f.id }}">
 
-                    <a
-                        href="/file/{{ f.id }}"
-                        style="display: contents; text-decoration: none; color: inherit;"
+                    
+                    <a href="/file/{{ f.id }}"
+                        style="display:contents; text-decoration:none; color:inherit;"
                     >
-
                         <div class="file-icon
-                            {% if   f.file_type == 'image' %} fi-image
-                            {% elif f.file_type == 'pdf'   %} fi-pdf
-                            {% elif f.file_type == 'word'  %} fi-word
-                            {% elif f.file_type == 'audio' %} fi-audio
-                            {% elif f.file_type == 'video' %} fi-video
-                            {% else %}                         fi-zip
-                            {% endif %}">
+                            {% if   f.file_type == 'image' %}fi-image
+                            {% elif f.file_type == 'pdf'   %}fi-pdf
+                            {% elif f.file_type == 'word'  %}fi-word
+                            {% elif f.file_type == 'audio' %}fi-audio
+                            {% elif f.file_type == 'video' %}fi-video
+                            {% else %}fi-zip{% endif %}">
                             {% if   f.file_type == 'image' %}&#128444;
                             {% elif f.file_type == 'pdf'   %}&#128196;
                             {% elif f.file_type == 'word'  %}&#128221;
                             {% elif f.file_type == 'audio' %}&#127925;
                             {% elif f.file_type == 'video' %}&#127916;
-                            {% else %}&#128230;
-                            {% endif %}
+                            {% else %}&#128230;{% endif %}
                         </div>
 
                         <div>
@@ -817,20 +814,27 @@
                             {% if   f.highest_severity == 'HIGH'   %}&#9888; HIGH
                             {% elif f.highest_severity == 'MEDIUM' %}&#9889; MED
                             {% elif f.highest_severity == 'LOW'    %}&#10003; LOW
-                            {% else %}&mdash; NONE
-                            {% endif %}
+                            {% else %}&mdash; NONE{% endif %}
                         </span>
 
-                    </a>
 
-                    <button
+                        <button
+                        title="Export PDF report"
+                        onclick="window.location.href='/report/{{ f.id }}'"
+                        style="width:32px; height:32px; border-radius:8px; border:1px solid rgba(0,212,255,0.3); background:rgba(0,212,255,0.08); color:var(--cyan); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0;"
+                        onmouseover="this.style.background='rgba(0,212,255,0.2)'"
+                        onmouseout="this.style.background='rgba(0,212,255,0.08)'"
+                    >
+                        &#128196;
+                    </button>
+                    
+                    <!-- <button
                         class="del-btn"
                         title="Delete this file"
                         onclick="openDeleteModal({{ f.id }}, '{{ f.filename }}')"
                     >
                         &#128465;
-                    </button>
-
+                    </button> -->
                 </div>
 
                 {% endfor %}
@@ -1016,7 +1020,7 @@
 
 <div class="page-foot">
     <span>MetaSleuth v{{ version }} &nbsp;&middot;&nbsp; {{ analyst }}</span>
-    <a href="#" class="btn-outline">&#128196; Export Case Report</a>
+    <a href="/evidence" class="btn-outline">&#128196; View Files to Export Reports</a>
 </div>
 
 {% if gps_findings %}

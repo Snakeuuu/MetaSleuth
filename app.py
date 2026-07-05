@@ -465,6 +465,59 @@ def api_correlations():
         'shared_gps':     [dict(r) for r in corr['shared_gps']]
     })
 
+@app.route('/verify/<int:file_id>', methods=['POST'])
+def verify_file(file_id):
+    """
+    Re-hashes the file currently in the uploads folder
+    and compares it against the hash stored at time of upload.
+    
+    If they match — file is intact, chain of custody holds.
+    If they differ — file was modified after upload, serious finding.
+    """
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM files WHERE id = ?', (file_id,))
+    file_row = cursor.fetchone()
+    conn.close()
+
+    if not file_row:
+        return jsonify({'error': 'File not found in database'}), 404
+
+    filename = file_row['filename']
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+    if not os.path.exists(filepath):
+        return jsonify({
+            'verified':  False,
+            'error':     'Physical file not found in uploads folder. '
+                         'It may have been moved or deleted outside MetaSleuth.'
+        }), 404
+
+    # Recalculate hashes right now
+    current_hashes = calculate_hashes(filepath)
+
+    # Compare against what was stored on upload
+    original_sha256 = file_row['sha256']
+    current_sha256  = current_hashes['sha256']
+
+    match = original_sha256 == current_sha256
+
+    log_action(
+        'VERIFY',
+        f'Integrity check for {filename} — '
+        f'{"PASSED" if match else "FAILED — hash mismatch detected"}',
+        ANALYST_NAME,
+        TOOL_VERSION
+    )
+
+    return jsonify({
+        'verified':       match,
+        'filename':       filename,
+        'original_sha256': original_sha256,
+        'current_sha256':  current_sha256,
+        'original_md5':    file_row['md5'],
+        'current_md5':     current_hashes['md5'],
+    })
 
 # ---------------------------------------------------------------
 # STARTUP
